@@ -298,9 +298,38 @@ def hybrid_map(image, fsize, step):
    return np.divide(hmap, 2)
 
 
+# extact color channel
+def extract_color_channel(image, kernel):
+   channel = np.copy(image)
+   height, width = image.shape[:2]
+   for y in range(0, height):
+      for x in range(0, width):
+         channel[y,x] = image[y, x] * kernel
+   return cv2.cvtColor(channel, cv2.COLOR_BGR2GRAY)
+
+def extract_blue(image):
+   return extract_color_channel(image, (1, 0, 0))
+
+def extract_green(image):
+   return extract_color_channel(image, (0, 1, 0))
+
+def extract_red(image):
+   return extract_color_channel(image, (0, 0, 1))
+
 ######################################################################
 # Tests & runnables
 ######################################################################
+
+def color_extraction_test(file):
+   image = cv2.imread(file, cv2.IMREAD_COLOR)
+   print(image.dtype)
+   # print(image.shape)
+   # print(np.multiply(image, (1, 1, 1)).shape)
+   # image = map(lambda x: x * (1, 1, 1), image)
+
+   reds = extract_red(image)
+
+   show_images([image, reds])
 
 # calculate contrast of image
 def contrast_test(file):
@@ -329,9 +358,9 @@ def super_map_test(file):
    emap = entropy_map(image, fsize, step)
    hmap = hybrid_map(image, fsize, step)
    
-   paint_map(cimage, cmap, fsize, rsize)
-   paint_map(eimage, emap, fsize, rsize)
-   paint_map(himage, hmap, fsize, rsize)
+   paint_map(cimage, cmap, fsize, step,rsize)
+   paint_map(eimage, emap, fsize, step, rsize)
+   paint_map(himage, hmap, fsize, step, rsize)
    show_images([image, cimage, eimage, himage])
 
 # create a map on the image, highest entropy in red, lowest in green
@@ -347,7 +376,7 @@ def hybrid_map_test(file):
    # step = 5
 
    cmap = hybrid_map(image, fsize, step)
-   paint_map(colored_image, cmap, fsize, rsize)
+   paint_map(colored_image, cmap, fsize, step, rsize)
    show_images([image, colored_image])
 
 # create a map on the image, highest entropy in red, lowest in green
@@ -374,13 +403,44 @@ def entropy_map_test(file):
 
    fsize = 50
    step = 10
-   # fsize = 10
-   # step = 5
+   fsize = 10
+   step = 5
    rsize = step
 
    emap = entropy_map(image, fsize, step)
    paint_map(colored_image, emap, fsize, step, rsize)
    show_images([image, colored_image])
+
+def colored_entropy_test(file):
+   image = cv2.imread(file, cv2.IMREAD_COLOR)
+   gray = cv2.imread(file, 0)
+   #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+   blues = extract_blue(image)
+   greens = extract_green(image)
+   reds = extract_red(image)
+   map_image = np.copy(image)
+
+   show_images([image, gray, blues, greens, reds])
+
+   fsize = 50
+   step = 10
+   # fsize = 10
+   # step = 5
+   rsize = step
+
+   emap = entropy_map(gray, fsize, step)
+   bmap = entropy_map(blues, fsize, step)
+   gmap = entropy_map(greens, fsize, step)
+   rmap = entropy_map(reds, fsize, step)
+
+   height, width = emap.shape[:2]
+   fmap = np.copy(emap)
+   for y in range(0, height):
+      for x in range(0, width):
+         fmap[y,x] = (emap[y, x] + bmap[y, x] + gmap[y, x] + rmap[y, x]) / 4
+
+   paint_map(map_image, fmap, fsize, step, rsize)
+   show_images([image, gray, blues, greens, reds, map_image])
 
 # draw boxes around the highest and lowest contrast regions
 def contrast_extremes_test(file):
@@ -474,18 +534,19 @@ def test1(file):
 ######################################################################
 
 # file = 'entropy_images/bwv.jpg'
-# file = 'BSDS300/images/train/87065.jpg' # lizard
+file = 'BSDS300/images/train/87065.jpg' # lizard
 # file = 'BSDS300/images/train/134052.jpg' # leopard
 # file = 'leopard-ecrop.jpg' # leopard
-file = 'BSDS300/images/train/181018.jpg' # some girl
+# file = 'BSDS300/images/train/181018.jpg' # some girl
 # file = 'BSDS300/images/train/15004.jpg' # lady in the market
 
+colored_entropy_test(file)
+# color_extraction_test(file)
 # line_finder(file)
-
 # super_map_test(file)
 # hybrid_map_test(file)
 # contrast_map_test(file)
-entropy_map_test(file)
+# entropy_map_test(file)
 # cross_entropy_test_battery()
 
 
