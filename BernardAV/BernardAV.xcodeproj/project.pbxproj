@@ -1,0 +1,754 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4D60B5AE69ECD7EAF528ABDC /* Pods_BernardAV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9358E08533D90807DEED613 /* Pods_BernardAV.framework */; };
+		92C5BD401E57B3C500A262C2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C5BD3F1E57B3C500A262C2 /* AppDelegate.swift */; };
+		92C5BD421E57B3C500A262C2 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C5BD411E57B3C500A262C2 /* ViewController.swift */; };
+		92C5BD451E57B3C500A262C2 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 92C5BD431E57B3C500A262C2 /* Main.storyboard */; };
+		92C5BD481E57B3C500A262C2 /* BernardAV.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 92C5BD461E57B3C500A262C2 /* BernardAV.xcdatamodeld */; };
+		92C5BD4A1E57B3C500A262C2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 92C5BD491E57B3C500A262C2 /* Assets.xcassets */; };
+		92C5BD4D1E57B3C500A262C2 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 92C5BD4B1E57B3C500A262C2 /* LaunchScreen.storyboard */; };
+		92C5BD581E57B3C500A262C2 /* BernardAVTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C5BD571E57B3C500A262C2 /* BernardAVTests.swift */; };
+		92C5BD631E57B3C500A262C2 /* BernardAVUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C5BD621E57B3C500A262C2 /* BernardAVUITests.swift */; };
+		AB29545D12B086898D7D3AAD /* Pods_BernardAVTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74178F65F997CE0164DA5002 /* Pods_BernardAVTests.framework */; };
+		DC023B7081DDEDF2A216618E /* Pods_BernardAVUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5578AB7709E8BE9FD5DBEFDA /* Pods_BernardAVUITests.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		92C5BD541E57B3C500A262C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 92C5BD341E57B3C500A262C2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 92C5BD3B1E57B3C500A262C2;
+			remoteInfo = BernardAV;
+		};
+		92C5BD5F1E57B3C500A262C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 92C5BD341E57B3C500A262C2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 92C5BD3B1E57B3C500A262C2;
+			remoteInfo = BernardAV;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0C3E152856F912D86DB9EE8E /* Pods-BernardAV.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BernardAV.release.xcconfig"; path = "Pods/Target Support Files/Pods-BernardAV/Pods-BernardAV.release.xcconfig"; sourceTree = "<group>"; };
+		4D1A48D6CCB794CBF2D33678 /* Pods-BernardAVTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BernardAVTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-BernardAVTests/Pods-BernardAVTests.release.xcconfig"; sourceTree = "<group>"; };
+		5578AB7709E8BE9FD5DBEFDA /* Pods_BernardAVUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_BernardAVUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		74178F65F997CE0164DA5002 /* Pods_BernardAVTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_BernardAVTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		7FAC6E6D175FFCD6FB9E0CBD /* Pods-BernardAVUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BernardAVUITests.release.xcconfig"; path = "Pods/Target Support Files/Pods-BernardAVUITests/Pods-BernardAVUITests.release.xcconfig"; sourceTree = "<group>"; };
+		9208C8AFEA5B89D710E3422C /* Pods-BernardAV.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BernardAV.debug.xcconfig"; path = "Pods/Target Support Files/Pods-BernardAV/Pods-BernardAV.debug.xcconfig"; sourceTree = "<group>"; };
+		92C5BD3C1E57B3C500A262C2 /* BernardAV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BernardAV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		92C5BD3F1E57B3C500A262C2 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		92C5BD411E57B3C500A262C2 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		92C5BD441E57B3C500A262C2 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		92C5BD471E57B3C500A262C2 /* BernardAV.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = BernardAV.xcdatamodel; sourceTree = "<group>"; };
+		92C5BD491E57B3C500A262C2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		92C5BD4C1E57B3C500A262C2 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		92C5BD4E1E57B3C500A262C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		92C5BD531E57B3C500A262C2 /* BernardAVTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BernardAVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		92C5BD571E57B3C500A262C2 /* BernardAVTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BernardAVTests.swift; sourceTree = "<group>"; };
+		92C5BD591E57B3C500A262C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		92C5BD5E1E57B3C500A262C2 /* BernardAVUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BernardAVUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		92C5BD621E57B3C500A262C2 /* BernardAVUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BernardAVUITests.swift; sourceTree = "<group>"; };
+		92C5BD641E57B3C500A262C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		92C5BD701E57B52500A262C2 /* Bridging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bridging.h; sourceTree = "<group>"; };
+		9E020F60A6FC037C5CA455C2 /* Pods-BernardAVUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BernardAVUITests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-BernardAVUITests/Pods-BernardAVUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		C8644ED60836EFC483530D48 /* Pods-BernardAVTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BernardAVTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-BernardAVTests/Pods-BernardAVTests.debug.xcconfig"; sourceTree = "<group>"; };
+		F9358E08533D90807DEED613 /* Pods_BernardAV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_BernardAV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		92C5BD391E57B3C500A262C2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D60B5AE69ECD7EAF528ABDC /* Pods_BernardAV.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		92C5BD501E57B3C500A262C2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AB29545D12B086898D7D3AAD /* Pods_BernardAVTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		92C5BD5B1E57B3C500A262C2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DC023B7081DDEDF2A216618E /* Pods_BernardAVUITests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		74100DE5FFBF2D4625895E83 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F9358E08533D90807DEED613 /* Pods_BernardAV.framework */,
+				74178F65F997CE0164DA5002 /* Pods_BernardAVTests.framework */,
+				5578AB7709E8BE9FD5DBEFDA /* Pods_BernardAVUITests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		92C5BD331E57B3C500A262C2 = {
+			isa = PBXGroup;
+			children = (
+				92C5BD3E1E57B3C500A262C2 /* BernardAV */,
+				92C5BD561E57B3C500A262C2 /* BernardAVTests */,
+				92C5BD611E57B3C500A262C2 /* BernardAVUITests */,
+				92C5BD3D1E57B3C500A262C2 /* Products */,
+				9EDF56F2CB9A77052F7C79A2 /* Pods */,
+				74100DE5FFBF2D4625895E83 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		92C5BD3D1E57B3C500A262C2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				92C5BD3C1E57B3C500A262C2 /* BernardAV.app */,
+				92C5BD531E57B3C500A262C2 /* BernardAVTests.xctest */,
+				92C5BD5E1E57B3C500A262C2 /* BernardAVUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		92C5BD3E1E57B3C500A262C2 /* BernardAV */ = {
+			isa = PBXGroup;
+			children = (
+				92C5BD701E57B52500A262C2 /* Bridging.h */,
+				92C5BD3F1E57B3C500A262C2 /* AppDelegate.swift */,
+				92C5BD411E57B3C500A262C2 /* ViewController.swift */,
+				92C5BD431E57B3C500A262C2 /* Main.storyboard */,
+				92C5BD491E57B3C500A262C2 /* Assets.xcassets */,
+				92C5BD4B1E57B3C500A262C2 /* LaunchScreen.storyboard */,
+				92C5BD4E1E57B3C500A262C2 /* Info.plist */,
+				92C5BD461E57B3C500A262C2 /* BernardAV.xcdatamodeld */,
+			);
+			path = BernardAV;
+			sourceTree = "<group>";
+		};
+		92C5BD561E57B3C500A262C2 /* BernardAVTests */ = {
+			isa = PBXGroup;
+			children = (
+				92C5BD571E57B3C500A262C2 /* BernardAVTests.swift */,
+				92C5BD591E57B3C500A262C2 /* Info.plist */,
+			);
+			path = BernardAVTests;
+			sourceTree = "<group>";
+		};
+		92C5BD611E57B3C500A262C2 /* BernardAVUITests */ = {
+			isa = PBXGroup;
+			children = (
+				92C5BD621E57B3C500A262C2 /* BernardAVUITests.swift */,
+				92C5BD641E57B3C500A262C2 /* Info.plist */,
+			);
+			path = BernardAVUITests;
+			sourceTree = "<group>";
+		};
+		9EDF56F2CB9A77052F7C79A2 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				9208C8AFEA5B89D710E3422C /* Pods-BernardAV.debug.xcconfig */,
+				0C3E152856F912D86DB9EE8E /* Pods-BernardAV.release.xcconfig */,
+				C8644ED60836EFC483530D48 /* Pods-BernardAVTests.debug.xcconfig */,
+				4D1A48D6CCB794CBF2D33678 /* Pods-BernardAVTests.release.xcconfig */,
+				9E020F60A6FC037C5CA455C2 /* Pods-BernardAVUITests.debug.xcconfig */,
+				7FAC6E6D175FFCD6FB9E0CBD /* Pods-BernardAVUITests.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		92C5BD3B1E57B3C500A262C2 /* BernardAV */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 92C5BD671E57B3C500A262C2 /* Build configuration list for PBXNativeTarget "BernardAV" */;
+			buildPhases = (
+				F59E07A2A6BB38E2F2FD5A5C /* [CP] Check Pods Manifest.lock */,
+				92C5BD381E57B3C500A262C2 /* Sources */,
+				92C5BD391E57B3C500A262C2 /* Frameworks */,
+				92C5BD3A1E57B3C500A262C2 /* Resources */,
+				33EC45215F6AD99249FEE745 /* [CP] Embed Pods Frameworks */,
+				B75027FB563C234F29630096 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BernardAV;
+			productName = BernardAV;
+			productReference = 92C5BD3C1E57B3C500A262C2 /* BernardAV.app */;
+			productType = "com.apple.product-type.application";
+		};
+		92C5BD521E57B3C500A262C2 /* BernardAVTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 92C5BD6A1E57B3C500A262C2 /* Build configuration list for PBXNativeTarget "BernardAVTests" */;
+			buildPhases = (
+				4515E59601C224F91C59D8C9 /* [CP] Check Pods Manifest.lock */,
+				92C5BD4F1E57B3C500A262C2 /* Sources */,
+				92C5BD501E57B3C500A262C2 /* Frameworks */,
+				92C5BD511E57B3C500A262C2 /* Resources */,
+				78CF590ADC1AC8B13E90DDB5 /* [CP] Embed Pods Frameworks */,
+				E816C3B54EA7E3C16216F863 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				92C5BD551E57B3C500A262C2 /* PBXTargetDependency */,
+			);
+			name = BernardAVTests;
+			productName = BernardAVTests;
+			productReference = 92C5BD531E57B3C500A262C2 /* BernardAVTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		92C5BD5D1E57B3C500A262C2 /* BernardAVUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 92C5BD6D1E57B3C500A262C2 /* Build configuration list for PBXNativeTarget "BernardAVUITests" */;
+			buildPhases = (
+				B7FAF48D204E009828231875 /* [CP] Check Pods Manifest.lock */,
+				92C5BD5A1E57B3C500A262C2 /* Sources */,
+				92C5BD5B1E57B3C500A262C2 /* Frameworks */,
+				92C5BD5C1E57B3C500A262C2 /* Resources */,
+				051D9DF4F3F6F363CA337698 /* [CP] Embed Pods Frameworks */,
+				5DB9AD3C9A0B950A776EB327 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				92C5BD601E57B3C500A262C2 /* PBXTargetDependency */,
+			);
+			name = BernardAVUITests;
+			productName = BernardAVUITests;
+			productReference = 92C5BD5E1E57B3C500A262C2 /* BernardAVUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		92C5BD341E57B3C500A262C2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0820;
+				LastUpgradeCheck = 0820;
+				ORGANIZATIONNAME = "Arc Reactor";
+				TargetAttributes = {
+					92C5BD3B1E57B3C500A262C2 = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = GTRTWLYBMT;
+						ProvisioningStyle = Automatic;
+					};
+					92C5BD521E57B3C500A262C2 = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = GTRTWLYBMT;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 92C5BD3B1E57B3C500A262C2;
+					};
+					92C5BD5D1E57B3C500A262C2 = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = GTRTWLYBMT;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 92C5BD3B1E57B3C500A262C2;
+					};
+				};
+			};
+			buildConfigurationList = 92C5BD371E57B3C500A262C2 /* Build configuration list for PBXProject "BernardAV" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 92C5BD331E57B3C500A262C2;
+			productRefGroup = 92C5BD3D1E57B3C500A262C2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				92C5BD3B1E57B3C500A262C2 /* BernardAV */,
+				92C5BD521E57B3C500A262C2 /* BernardAVTests */,
+				92C5BD5D1E57B3C500A262C2 /* BernardAVUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		92C5BD3A1E57B3C500A262C2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				92C5BD4D1E57B3C500A262C2 /* LaunchScreen.storyboard in Resources */,
+				92C5BD4A1E57B3C500A262C2 /* Assets.xcassets in Resources */,
+				92C5BD451E57B3C500A262C2 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		92C5BD511E57B3C500A262C2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		92C5BD5C1E57B3C500A262C2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		051D9DF4F3F6F363CA337698 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-BernardAVUITests/Pods-BernardAVUITests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		33EC45215F6AD99249FEE745 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-BernardAV/Pods-BernardAV-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		4515E59601C224F91C59D8C9 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		5DB9AD3C9A0B950A776EB327 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-BernardAVUITests/Pods-BernardAVUITests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		78CF590ADC1AC8B13E90DDB5 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-BernardAVTests/Pods-BernardAVTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		B75027FB563C234F29630096 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-BernardAV/Pods-BernardAV-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		B7FAF48D204E009828231875 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		E816C3B54EA7E3C16216F863 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-BernardAVTests/Pods-BernardAVTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F59E07A2A6BB38E2F2FD5A5C /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		92C5BD381E57B3C500A262C2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				92C5BD421E57B3C500A262C2 /* ViewController.swift in Sources */,
+				92C5BD481E57B3C500A262C2 /* BernardAV.xcdatamodeld in Sources */,
+				92C5BD401E57B3C500A262C2 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		92C5BD4F1E57B3C500A262C2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				92C5BD581E57B3C500A262C2 /* BernardAVTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		92C5BD5A1E57B3C500A262C2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				92C5BD631E57B3C500A262C2 /* BernardAVUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		92C5BD551E57B3C500A262C2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 92C5BD3B1E57B3C500A262C2 /* BernardAV */;
+			targetProxy = 92C5BD541E57B3C500A262C2 /* PBXContainerItemProxy */;
+		};
+		92C5BD601E57B3C500A262C2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 92C5BD3B1E57B3C500A262C2 /* BernardAV */;
+			targetProxy = 92C5BD5F1E57B3C500A262C2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		92C5BD431E57B3C500A262C2 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				92C5BD441E57B3C500A262C2 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		92C5BD4B1E57B3C500A262C2 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				92C5BD4C1E57B3C500A262C2 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		92C5BD651E57B3C500A262C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		92C5BD661E57B3C500A262C2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		92C5BD681E57B3C500A262C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9208C8AFEA5B89D710E3422C /* Pods-BernardAV.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = GTRTWLYBMT;
+				INFOPLIST_FILE = BernardAV/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.arcreactor.BernardAV;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = BernardAV/Bridging.h;
+				SWIFT_VERSION = 3.0;
+			};
+			name = Debug;
+		};
+		92C5BD691E57B3C500A262C2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0C3E152856F912D86DB9EE8E /* Pods-BernardAV.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = GTRTWLYBMT;
+				INFOPLIST_FILE = BernardAV/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.arcreactor.BernardAV;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = BernardAV/Bridging.h;
+				SWIFT_VERSION = 3.0;
+			};
+			name = Release;
+		};
+		92C5BD6B1E57B3C500A262C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = C8644ED60836EFC483530D48 /* Pods-BernardAVTests.debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = GTRTWLYBMT;
+				INFOPLIST_FILE = BernardAVTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.arcreactor.BernardAVTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BernardAV.app/BernardAV";
+			};
+			name = Debug;
+		};
+		92C5BD6C1E57B3C500A262C2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4D1A48D6CCB794CBF2D33678 /* Pods-BernardAVTests.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = GTRTWLYBMT;
+				INFOPLIST_FILE = BernardAVTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.arcreactor.BernardAVTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BernardAV.app/BernardAV";
+			};
+			name = Release;
+		};
+		92C5BD6E1E57B3C500A262C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9E020F60A6FC037C5CA455C2 /* Pods-BernardAVUITests.debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				DEVELOPMENT_TEAM = GTRTWLYBMT;
+				INFOPLIST_FILE = BernardAVUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.arcreactor.BernardAVUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
+				TEST_TARGET_NAME = BernardAV;
+			};
+			name = Debug;
+		};
+		92C5BD6F1E57B3C500A262C2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7FAC6E6D175FFCD6FB9E0CBD /* Pods-BernardAVUITests.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				DEVELOPMENT_TEAM = GTRTWLYBMT;
+				INFOPLIST_FILE = BernardAVUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.arcreactor.BernardAVUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
+				TEST_TARGET_NAME = BernardAV;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		92C5BD371E57B3C500A262C2 /* Build configuration list for PBXProject "BernardAV" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				92C5BD651E57B3C500A262C2 /* Debug */,
+				92C5BD661E57B3C500A262C2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		92C5BD671E57B3C500A262C2 /* Build configuration list for PBXNativeTarget "BernardAV" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				92C5BD681E57B3C500A262C2 /* Debug */,
+				92C5BD691E57B3C500A262C2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		92C5BD6A1E57B3C500A262C2 /* Build configuration list for PBXNativeTarget "BernardAVTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				92C5BD6B1E57B3C500A262C2 /* Debug */,
+				92C5BD6C1E57B3C500A262C2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		92C5BD6D1E57B3C500A262C2 /* Build configuration list for PBXNativeTarget "BernardAVUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				92C5BD6E1E57B3C500A262C2 /* Debug */,
+				92C5BD6F1E57B3C500A262C2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		92C5BD461E57B3C500A262C2 /* BernardAV.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				92C5BD471E57B3C500A262C2 /* BernardAV.xcdatamodel */,
+			);
+			currentVersion = 92C5BD471E57B3C500A262C2 /* BernardAV.xcdatamodel */;
+			path = BernardAV.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = 92C5BD341E57B3C500A262C2 /* Project object */;
+}
