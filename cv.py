@@ -52,6 +52,18 @@ def fill_rect(image, rect, color):
 
    image[y:y+h,x:x+w] = color
 
+def paint_map(image, fMap, fsize, rsize):
+   for element in fMap:
+      x = element[0]
+      y = element[1]
+      fRed = element[2]
+      fGreen = 1 - fRed
+
+      color = (0, int(fGreen * 255), int(fRed * 255))
+      offset = (fsize - rsize) / 2
+      rect = [int(x + offset), int(y + offset), rsize, rsize]
+      fill_rect(image, rect, color)
+
 ######################################################################
 # Filters and image processing
 ######################################################################
@@ -120,8 +132,10 @@ def contrast(image):
    lAvg = np.average(indices, weights = lower)
 
    # weighted overage of upper half
-   indices = np.arange(halfSize, 2 * halfSize)
-   uAvg = np.average(indices, weights = upper)
+   uAvg = 0
+   if(np.sum(upper) > 0):
+      indices = np.arange(halfSize, 2 * halfSize)
+      uAvg = np.average(indices, weights = upper)
 
    return (uAvg - lAvg) / (2 * halfSize)
 
@@ -154,6 +168,20 @@ def line_finder(file):
    cv2.imshow('win1', colored_image)
    cv2.waitKey(0)
 
+# scan an image, focusing on regions of fsize x fsize, stepping every
+# step pixels, callback function for processing
+def focus_scan(image, fsize, step, callback):
+   height, width = image.shape[:2]
+   cols = int(math.floor((width - fsize) / step))
+   rows = int(math.floor((height - fsize) / step))
+
+   for yi in range(0, rows):
+      for xi in range(0, cols):
+         y = yi * step
+         x = xi * step
+         focus = image[y:y+fsize, x:x+fsize]
+         callback(x, y, focus)
+
 # scan image for a min or max value according to some function f
 # f can be entropy(image) or contrast(image) 
 def mm_region_scan(image, fsize, step, mm, f):
@@ -175,7 +203,6 @@ def mm_region_scan(image, fsize, step, mm, f):
 
    return [r, fsize, extreme]
 
-
 # find region of lowest contrast
 def lowest_contrast_region(image, fsize, step):
    return mm_region_scan(image, fsize, step, False, contrast)
@@ -192,17 +219,59 @@ def lowest_entropy_region(image, fsize, step):
 def highest_entropy_region(image, fsize, step):
    return mm_region_scan(image, fsize, step, True, entropy)
 
-def focus_scan(image, fsize, step, callback):
-   height, width = image.shape[:2]
-   cols = int(math.floor((width - fsize) / step))
-   rows = int(math.floor((height - fsize) / step))
+# generate an entropy map
+def entropy_map(image, fsize, step):
+   pass
 
-   for yi in range(0, rows):
-      for xi in range(0, cols):
-         y = yi * step
-         x = xi * step
-         focus = image[y:y+fsize, x:x+fsize]
-         callback(x, y, focus)
+# get min/max contrasts
+def mm_contrast(image, fsize, step):
+   fMin = lowest_contrast_region(image, fsize, step)[2]
+   fMax = highest_contrast_region(image, fsize, step)[2]
+   return [fMin, fMax]
+
+# get min/max entropies
+def mm_entropy(image, fsize, step):
+   fMin = lowest_entropy_region(image, fsize, step)[2]
+   fMax = highest_entropy_region(image, fsize, step)[2]
+   return [fMin, fMax]
+
+# create a new map according to some filter f
+def filter_map(image, fsize, step, f, fmm):
+   fmm = fmm(image, fsize, step)
+   fMin = fmm[0]
+   fMax = fmm[1]
+   mDist = fMax - fMin
+
+   fMap = []
+   print("fMin: %f, fMax: %f"%(fMin, fMax))
+   def process(x, y, focus):
+      nonlocal fMin, mDist
+      value = f(focus)
+      normalized = (value - fMin) / mDist
+      fMap.append((x, y, normalized))
+
+   # scan the image
+   focus_scan(image, fsize, step, process)
+
+   return fMap
+
+# NOTE: contrast less useful than entropy - see the leopard image for example
+# generates a contrast map
+def contrast_map(image, fsize, step):
+  return filter_map(image, fsize, step, contrast, mm_contrast)
+
+# generates an entropy map
+def entropy_map(image, fsize, step):
+   return filter_map(image, fsize, step, entropy, mm_entropy)
+
+# NOTE: does not seem useful
+# generates a hybrid entropy/contrast map
+def hybrid_map(image, fsize, step):
+   cmap = contrast_map(image, fsize, step)
+   emap = entropy_map(image, fsize, step)
+   hmap = np.add(cmap, emap)
+   return np.divide(hmap, 2)
+
 
 ######################################################################
 # Tests & runnables
@@ -218,6 +287,44 @@ def contrast_test(file):
    print("contrast %f"%(c))
    show_images([image])
 
+def super_map_test(file):
+   image = cv2.imread(file, 0)
+   eimage = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+   cimage = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+   himage = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+   show_images([image])
+
+   fsize = 50
+   step = 10
+   rsize = 6
+   # fsize = 20
+   # step = 5
+
+   cmap = contrast_map(image, fsize, step)
+   emap = entropy_map(image, fsize, step)
+   hmap = hybrid_map(image, fsize, step)
+   
+   paint_map(cimage, cmap, fsize, rsize)
+   paint_map(eimage, emap, fsize, rsize)
+   paint_map(himage, hmap, fsize, rsize)
+   show_images([image, cimage, eimage, himage])
+
+# create a map on the image, highest entropy in red, lowest in green
+def hybrid_map_test(file):
+   image = cv2.imread(file, 0)
+   colored_image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+   show_images([image])
+
+   fsize = 50
+   step = 10
+   rsize = 6
+   # fsize = 20
+   # step = 5
+
+   cmap = hybrid_map(image, fsize, step)
+   paint_map(colored_image, cmap, fsize, rsize)
+   show_images([image, colored_image])
+
 # create a map on the image, highest entropy in red, lowest in green
 def contrast_map_test(file):
    image = cv2.imread(file, 0)
@@ -230,27 +337,8 @@ def contrast_map_test(file):
    # fsize = 20
    # step = 5
 
-   eMin = lowest_contrast_region(image, fsize, step)[2]
-   eMax = highest_contrast_region(image, fsize, step)[2]
-
-   print("cMin: %f, cMax: %f"%(eMin, eMax))
-   def process(x, y, focus):
-      nonlocal eMin, eMax
-      fentropy = contrast(focus)
-
-      mDist = eMax - eMin
-      fRed = (fentropy - eMin) / mDist
-      fGreen = (eMax - fentropy) / mDist
-
-      color = (0, int(fGreen * 255), int(fRed * 255))
-
-      offset = (fsize - rsize) / 2
-      rect = [int(x + offset), int(y + offset), rsize, rsize]
-      fill_rect(colored_image, rect, color)
-
-   # scan the image
-   focus_scan(image, fsize, step, process)
-
+   cmap = contrast_map(image, fsize, step)
+   paint_map(colored_image, cmap, fsize, rsize)
    show_images([image, colored_image])
 
 # create a map on the image, highest entropy in red, lowest in green
@@ -265,27 +353,8 @@ def entropy_map_test(file):
    # fsize = 20
    # step = 5
 
-   eMin = lowest_entropy_region(image, fsize, step)[2]
-   eMax = highest_entropy_region(image, fsize, step)[2]
-
-   print("eMin: %f, eMax: %f"%(eMin, eMax))
-   def process(x, y, focus):
-      nonlocal eMin, eMax
-      fentropy = entropy(focus)
-
-      mDist = eMax - eMin
-      fRed = (fentropy - eMin) / mDist
-      fGreen = (eMax - fentropy) / mDist
-
-      color = (0, int(fGreen * 255), int(fRed * 255))
-
-      offset = (fsize - rsize) / 2
-      rect = [int(x + offset), int(y + offset), rsize, rsize]
-      fill_rect(colored_image, rect, color)
-
-   # scan the image
-   focus_scan(image, fsize, step, process)
-
+   emap = entropy_map(image, fsize, step)
+   paint_map(colored_image, emap, fsize, rsize)
    show_images([image, colored_image])
 
 # draw boxes around the highest and lowest contrast regions
@@ -380,15 +449,18 @@ def test1(file):
 ######################################################################
 
 # file = 'entropy_images/bwv.jpg'
-file = 'BSDS300/images/train/87065.jpg' # lizard
+# file = 'BSDS300/images/train/87065.jpg' # lizard
 # file = 'BSDS300/images/train/134052.jpg' # leopard
+file = 'leopard-ecrop.jpg' # leopard
 # file = 'BSDS300/images/train/181018.jpg' # some girl
 # file = 'BSDS300/images/train/15004.jpg' # lady in the market
 
 # line_finder(file)
 
-contrast_map_test(file)
-# entropy_map_test(file)
+# super_map_test(file)
+# hybrid_map_test(file)
+# contrast_map_test(file)
+entropy_map_test(file)
 # cross_entropy_test_battery()
 
 
