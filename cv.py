@@ -52,11 +52,12 @@ def fill_rect(image, rect, color):
 
    image[y:y+h,x:x+w] = color
 
-def paint_map(image, fMap, fsize, rsize):
-   for element in fMap:
-      x = element[0]
-      y = element[1]
-      fRed = element[2]
+def paint_map(image, fMap, fsize, step, rsize):
+   for (y,x), value in np.ndenumerate(fMap):
+   # for element in fMap:
+      x *= step
+      y *= step
+      fRed = value
       fGreen = 1 - fRed
 
       color = (0, int(fGreen * 255), int(fRed * 255))
@@ -168,15 +169,19 @@ def line_finder(file):
    cv2.imshow('win1', colored_image)
    cv2.waitKey(0)
 
-# scan an image, focusing on regions of fsize x fsize, stepping every
-# step pixels, callback function for processing
-def focus_scan(image, fsize, step, callback):
+def focus_dimensions(image, fsize, step):
    height, width = image.shape[:2]
    cols = int(math.floor((width - fsize) / step))
    rows = int(math.floor((height - fsize) / step))
+   return [rows, cols]
 
-   for yi in range(0, rows):
-      for xi in range(0, cols):
+# scan an image, focusing on regions of fsize x fsize, stepping every
+# step pixels, callback function for processing
+def focus_scan(image, fsize, step, callback):
+   dims = focus_dimensions(image, fsize, step)
+
+   for yi in range(0, dims[0]):
+      for xi in range(0, dims[1]):
          y = yi * step
          x = xi * step
          focus = image[y:y+fsize, x:x+fsize]
@@ -242,18 +247,38 @@ def filter_map(image, fsize, step, f, fmm):
    fMax = fmm[1]
    mDist = fMax - fMin
 
-   fMap = []
-   print("fMin: %f, fMax: %f"%(fMin, fMax))
+   dims = focus_dimensions(image, fsize, step)
+   fMap = np.zeros(dims)
+   print(fMap.shape)
    def process(x, y, focus):
       nonlocal fMin, mDist
       value = f(focus)
       normalized = (value - fMin) / mDist
-      fMap.append((x, y, normalized))
+      fMap[int(y/step), int(x/step)] = normalized
 
    # scan the image
    focus_scan(image, fsize, step, process)
 
    return fMap
+
+# def filter_map(image, fsize, step, f, fmm):
+#    fmm = fmm(image, fsize, step)
+#    fMin = fmm[0]
+#    fMax = fmm[1]
+#    mDist = fMax - fMin
+
+#    fMap = []
+#    print("fMin: %f, fMax: %f"%(fMin, fMax))
+#    def process(x, y, focus):
+#       nonlocal fMin, mDist
+#       value = f(focus)
+#       normalized = (value - fMin) / mDist
+#       fMap.append((x, y, normalized))
+
+#    # scan the image
+#    focus_scan(image, fsize, step, process)
+
+#    return fMap
 
 # NOTE: contrast less useful than entropy - see the leopard image for example
 # generates a contrast map
@@ -338,7 +363,7 @@ def contrast_map_test(file):
    # step = 5
 
    cmap = contrast_map(image, fsize, step)
-   paint_map(colored_image, cmap, fsize, rsize)
+   paint_map(colored_image, cmap, fsize, step, rsize)
    show_images([image, colored_image])
 
 # create a map on the image, highest entropy in red, lowest in green
@@ -349,12 +374,12 @@ def entropy_map_test(file):
 
    fsize = 50
    step = 10
-   rsize = 6
-   # fsize = 20
+   # fsize = 10
    # step = 5
+   rsize = step
 
    emap = entropy_map(image, fsize, step)
-   paint_map(colored_image, emap, fsize, rsize)
+   paint_map(colored_image, emap, fsize, step, rsize)
    show_images([image, colored_image])
 
 # draw boxes around the highest and lowest contrast regions
@@ -451,8 +476,8 @@ def test1(file):
 # file = 'entropy_images/bwv.jpg'
 # file = 'BSDS300/images/train/87065.jpg' # lizard
 # file = 'BSDS300/images/train/134052.jpg' # leopard
-file = 'leopard-ecrop.jpg' # leopard
-# file = 'BSDS300/images/train/181018.jpg' # some girl
+# file = 'leopard-ecrop.jpg' # leopard
+file = 'BSDS300/images/train/181018.jpg' # some girl
 # file = 'BSDS300/images/train/15004.jpg' # lady in the market
 
 # line_finder(file)
