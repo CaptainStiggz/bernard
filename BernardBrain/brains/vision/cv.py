@@ -28,7 +28,7 @@ def show_images(images):
       cv2.moveWindow(windowName, origin[0]+shiftX, origin[1]+shiftY)
       cv2.imshow(windowName, image)
 
-      print("w: %d, h: %d, sx: %d, sy: %d"%(width, height, shiftX, shiftY))
+      # print("w: %d, h: %d, sx: %d, sy: %d"%(width, height, shiftX, shiftY))
 
    cv2.waitKey(0)
 
@@ -224,10 +224,6 @@ def lowest_entropy_region(image, fsize, step):
 def highest_entropy_region(image, fsize, step):
    return mm_region_scan(image, fsize, step, True, entropy)
 
-# generate an entropy map
-def entropy_map(image, fsize, step):
-   pass
-
 # get min/max contrasts
 def mm_contrast(image, fsize, step):
    fMin = lowest_contrast_region(image, fsize, step)[2]
@@ -238,28 +234,40 @@ def mm_contrast(image, fsize, step):
 def mm_entropy(image, fsize, step):
    fMin = lowest_entropy_region(image, fsize, step)[2]
    fMax = highest_entropy_region(image, fsize, step)[2]
+   print("eMin: %f, eMax: %f"%(fMin, fMax))
    return [fMin, fMax]
 
 # create a new map according to some filter f
-def filter_map(image, fsize, step, f, fmm):
-   fmm = fmm(image, fsize, step)
-   fMin = fmm[0]
-   fMax = fmm[1]
-   mDist = fMax - fMin
+def filter_map(image, fsize, step, f, normalize=True):
+   # fmm = fmm(image, fsize, step)
+   fMin = None
+   fMax = None
 
    dims = focus_dimensions(image, fsize, step)
    fMap = np.zeros(dims)
    print(fMap.shape)
    def process(x, y, focus):
-      nonlocal fMin, mDist
+      nonlocal fMin, fMax
       value = f(focus)
-      normalized = (value - fMin) / mDist
-      fMap[int(y/step), int(x/step)] = normalized
+      # normalized = (value - fMin) / mDist
+      fMap[int(y/step), int(x/step)] = value
+
+      # check for min/max
+      if (fMin is None) or (value < fMin):
+         fMin = value
+      if (fMax is None) or (value > fMax):
+         fMax = value
 
    # scan the image
    focus_scan(image, fsize, step, process)
 
-   return fMap
+   # normalize the map
+   if(normalize):
+      fDist = fMax - fMin
+      print("fDist: %f"%(fDist))
+      nMap = (fMap - fMin) / fDist
+   
+   return nMap
 
 # def filter_map(image, fsize, step, f, fmm):
 #    fmm = fmm(image, fsize, step)
@@ -283,11 +291,11 @@ def filter_map(image, fsize, step, f, fmm):
 # NOTE: contrast less useful than entropy - see the leopard image for example
 # generates a contrast map
 def contrast_map(image, fsize, step):
-  return filter_map(image, fsize, step, contrast, mm_contrast)
+  return filter_map(image, fsize, step, contrast)
 
 # generates an entropy map
 def entropy_map(image, fsize, step):
-   return filter_map(image, fsize, step, entropy, mm_entropy)
+   return filter_map(image, fsize, step, entropy)
 
 # NOTE: does not seem useful
 # generates a hybrid entropy/contrast map
@@ -300,21 +308,28 @@ def hybrid_map(image, fsize, step):
 
 # extact color channel
 def extract_color_channel(image, kernel):
-   channel = np.copy(image)
-   height, width = image.shape[:2]
-   for y in range(0, height):
-      for x in range(0, width):
-         channel[y,x] = image[y, x] * kernel
-   return cv2.cvtColor(channel, cv2.COLOR_BGR2GRAY)
+   # np.dot(image, np.array([1,1,1]))
+   return image[:,:,kernel]
 
+   # leaves the array in full-color
+   # channel = np.copy(image)
+   # height, width = image.shape[:2]
+   # for y in range(0, height):
+   #    for x in range(0, width):
+   #       channel[y,x] = image[y, x] * kernel
+   # return channel # cv2.cvtColor(channel, cv2.COLOR_BGR2GRAY)
+   
+# extract blue channel
 def extract_blue(image):
-   return extract_color_channel(image, (1, 0, 0))
+   return extract_color_channel(image, 0)
 
+# extract green channel
 def extract_green(image):
-   return extract_color_channel(image, (0, 1, 0))
+   return extract_color_channel(image, 1)
 
+# extract red channel
 def extract_red(image):
-   return extract_color_channel(image, (0, 0, 1))
+   return extract_color_channel(image, 2)
 
 ######################################################################
 # Tests & runnables
@@ -322,14 +337,12 @@ def extract_red(image):
 
 def color_extraction_test(file):
    image = cv2.imread(file, cv2.IMREAD_COLOR)
-   print(image.dtype)
    # print(image.shape)
    # print(np.multiply(image, (1, 1, 1)).shape)
    # image = map(lambda x: x * (1, 1, 1), image)
-
-   reds = extract_red(image)
-
-   show_images([image, reds])
+   #image = np.arange(5*5*3).reshape(5,5,3)
+   #image = np.ones([5, 5, 3]) * 255
+   show_images([image, extract_blue(image), extract_green(image), extract_red(image)])
 
 # calculate contrast of image
 def contrast_test(file):
@@ -410,6 +423,33 @@ def entropy_map_test(file):
    emap = entropy_map(image, fsize, step)
    paint_map(colored_image, emap, fsize, step, rsize)
    show_images([image, colored_image])
+
+def color_channel_entropy_test(file):
+   image = cv2.imread(file, cv2.IMREAD_COLOR)
+   blues = extract_blue(image)
+   greens = extract_green(image)
+   reds = extract_red(image)
+   blueMap = np.copy(image)
+   redMap = np.copy(image)
+   greenMap = np.copy(image)
+
+   show_images([blues, greens, reds])
+
+   fsize = 50
+   step = 10
+   fsize = 8
+   step = 4
+   rsize = step
+
+   print("eBlue: %f, eGreen: %f, eRed: %f"%(entropy(blues), entropy(greens), entropy(reds)))
+   bmap = entropy_map(blues, fsize, step)
+   gmap = entropy_map(greens, fsize, step)
+   rmap = entropy_map(reds, fsize, step)
+
+   paint_map(blueMap, bmap, fsize, step, rsize)
+   paint_map(greenMap, gmap, fsize, step, rsize)
+   paint_map(redMap, rmap, fsize, step, rsize)
+   show_images([blues, greens, reds, blueMap, redMap, greenMap])
 
 def colored_entropy_test(file):
    image = cv2.imread(file, cv2.IMREAD_COLOR)
@@ -534,19 +574,22 @@ def test1(file):
 ######################################################################
 
 # file = 'entropy_images/bwv.jpg'
-file = 'BSDS300/images/train/87065.jpg' # lizard
-# file = 'BSDS300/images/train/134052.jpg' # leopard
+# file = 'bgrtest2.jpg' # color test
+# file = 'BSDS300/images/train/87065.jpg' # lizard
+file = 'BSDS300/images/train/134052.jpg' # leopard
+# file = 'entropygirl.png'
 # file = 'leopard-ecrop.jpg' # leopard
 # file = 'BSDS300/images/train/181018.jpg' # some girl
 # file = 'BSDS300/images/train/15004.jpg' # lady in the market
 
-colored_entropy_test(file)
+# color_channel_entropy_test(file)
+# colored_entropy_test(file)
 # color_extraction_test(file)
 # line_finder(file)
 # super_map_test(file)
 # hybrid_map_test(file)
 # contrast_map_test(file)
-# entropy_map_test(file)
+entropy_map_test(file)
 # cross_entropy_test_battery()
 
 
