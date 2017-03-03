@@ -29,7 +29,7 @@ def symmetry_test(file):
    hsym = np.copy(vsym)
    tsym = np.copy(vsym)
 
-   size = 10
+   size = 20
    smap = bv.symmetry_map(image, size)
    vmap = bv.symmetry_axis_map(image, 1, size)
    hmap = bv.symmetry_axis_map(image, 0, size)

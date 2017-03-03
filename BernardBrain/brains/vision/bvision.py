@@ -105,23 +105,28 @@ def symmetry_map(image, size):
    sMap = np.zeros([2*vSymmetry.size, 2*hSymmetry.size])
    # sMap = np.zeros([vSymmetry.size, hSymmetry.size])
 
-   sMin = None
+   sMin = min(np.amin(vSymmetry), np.amin(hSymmetry))
    sMax = max(np.amax(vSymmetry), np.amax(hSymmetry))
+   sDist = sMax - sMin
+
    for y in range(0, vSymmetry.size):
       for x in range(0, hSymmetry.size):
          y2 = 2*vSymmetry.size - y - 1
          x2 = 2*hSymmetry.size - x - 1
-         symmetry = vSymmetry[y] + hSymmetry[x]
+
+         symmetry = ((vSymmetry[y] - sMin) / sDist) + ((hSymmetry[x] - sMin) / sDist)
+         symmetry /= 2
+         # print(symmetry)
          sMap[y,x] = symmetry
          sMap[y2,x2] = symmetry
          sMap[y,x2] = symmetry
          sMap[y2,x] = symmetry
 
-         # check for min/max
-         if (sMin is None) or (symmetry < sMin):
-            sMin = symmetry
-         if (sMax is None) or (symmetry > sMin):
-            sMax = symmetry
+         # # check for min/max
+         # if (sMin is None) or (symmetry < sMin):
+         #    sMin = symmetry
+         # if (sMax is None) or (symmetry > sMin):
+         #    sMax = symmetry
 
    # normalize
    # sDist = sMax - sMin
@@ -143,8 +148,8 @@ def symmetry_axis_map(image, axis, size):
    
    region = height if (axis == 1) else width
 
-   sMax = None
-   sMin = None
+   # sMax = None
+   # sMin = None
    smap = np.zeros(int(numRegions / 2))
 
    for i in range(0, int(numRegions / 2)):
@@ -160,11 +165,11 @@ def symmetry_axis_map(image, axis, size):
       symmetry = np.average(abs(slice1-slice2))
       smap[i] = symmetry
 
-      # check for min/max
-      if (sMin is None) or (symmetry < sMin):
-         sMin = symmetry
-      if (sMax is None) or (symmetry > sMin):
-         sMax = symmetry
+      # # check for min/max
+      # if (sMin is None) or (symmetry < sMin):
+      #    sMin = symmetry
+      # if (sMax is None) or (symmetry > sMin):
+      #    sMax = symmetry
 
 
    # normalize
