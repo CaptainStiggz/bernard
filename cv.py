@@ -7,38 +7,10 @@ mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import bvision as bv
 import bvisionui as bui
-from os import listdir
-from os.path import isfile, join
 
 ######################################################################
 # Current Tests
 ######################################################################
-
-# run a test battery on all files in BSD test until user quits
-def test_battery(f):
-   folder = 'BSDS300/images/train'
-   files = [f for f in listdir(folder) if isfile(join(folder, f))]
-   for file in files:
-      file = folder+'/'+file
-      print(file)
-      f(file)
-
-def symmetry_test(file):
-   image = cv2.imread(file, 0)
-   vsym = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-   hsym = np.copy(vsym)
-   tsym = np.copy(vsym)
-
-   size = 10
-   smap = bv.symmetry_map(image, size)
-   vmap = bv.symmetry_axis_map(image, 1, size)
-   hmap = bv.symmetry_axis_map(image, 0, size)
-
-   bui.paint_symmetry(tsym, smap, size)
-   bui.paint_axis_symmetry(vsym, vmap, size)
-   bui.paint_axis_symmetry(hsym, hmap, size)
-
-   bui.show_images([image, vsym, hsym, tsym])
 
 # extract color channels and display results
 def color_extraction_test(file):
@@ -54,7 +26,7 @@ def color_extraction_test(file):
 def entropy_map_test(file):
    image = cv2.imread(file, 0)
    colored_image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-   bui.show_images([image])
+   biu.show_images([image])
 
    fsize = 50
    step = 10
@@ -69,34 +41,30 @@ def entropy_map_test(file):
 # displays entropy of each color channel individually
 def color_channel_entropy_test(file):
    image = cv2.imread(file, cv2.IMREAD_COLOR)
-   gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
    blues = bv.extract_blue(image)
    greens = bv.extract_green(image)
    reds = bv.extract_red(image)
    blueMap = np.copy(image)
    redMap = np.copy(image)
    greenMap = np.copy(image)
-   grayMap = np.copy(image)
 
    bui.show_images([blues, greens, reds])
 
    fsize = 50
    step = 10
-   # fsize = 8
-   # step = 4
+   fsize = 8
+   step = 4
    rsize = step
 
-   print("eGray: %f eBlue: %f, eGreen: %f, eRed: %f"%(bv.entropy(gray), bv.entropy(blues), bv.entropy(greens), bv.entropy(reds)))
-   emap = bv.entropy_map(gray, fsize, step)
+   print("eBlue: %f, eGreen: %f, eRed: %f"%(entropy(blues), entropy(greens), entropy(reds)))
    bmap = bv.entropy_map(blues, fsize, step)
    gmap = bv.entropy_map(greens, fsize, step)
    rmap = bv.entropy_map(reds, fsize, step)
 
-   bui.paint_map(grayMap, bmap, fsize, step, rsize)
    bui.paint_map(blueMap, bmap, fsize, step, rsize)
    bui.paint_map(greenMap, gmap, fsize, step, rsize)
    bui.paint_map(redMap, rmap, fsize, step, rsize)
-   bui.show_images([image, gray, grayMap, blues, greens, reds, blueMap, redMap, greenMap])
+   bui.show_images([blues, greens, reds, blueMap, redMap, greenMap])
 
 # displays entropy of all color channels, combined
 def colored_entropy_test(file):
@@ -290,21 +258,16 @@ def test1(file):
 # main
 ######################################################################
 
-file = 'entropy_images/bwv.jpg'
-# file = 'images/symmetrytest.jpg'
+# file = 'entropy_images/bwv.jpg'
 # file = 'bgrtest2.jpg' # color test
 # file = 'BSDS300/images/train/87065.jpg' # lizard
-# file = 'BSDS300/images/train/100075.jpg' # bears
-# file = 'BSDS300/images/train/134052.jpg' # leopard
+file = 'BSDS300/images/train/134052.jpg' # leopard
 # file = 'entropygirl.png'
 # file = 'leopard-ecrop.jpg' # leopard
 # file = 'BSDS300/images/train/181018.jpg' # some girl
 # file = 'BSDS300/images/train/15004.jpg' # lady in the market
 
-test_battery(symmetry_test)
-# symmetry_test(file)
-# test_battery(color_channel_entropy_test)
-# color_channel_entropy_test(file)
+color_channel_entropy_test(file)
 # colored_entropy_test(file)
 # color_extraction_test(file)
 # line_finder(file)
