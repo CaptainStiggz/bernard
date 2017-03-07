@@ -52,7 +52,7 @@ def filter_map(image, fsize, step, f, normalize=True):
 
    dims = focus_dimensions(image, fsize, step)
    fMap = np.zeros(dims)
-   print(fMap.shape)
+   # print(fMap.shape)
    def process(x, y, focus):
       nonlocal fMin, fMax
       value = f(focus)
@@ -71,7 +71,7 @@ def filter_map(image, fsize, step, f, normalize=True):
    # normalize the map
    if(normalize):
       fDist = fMax - fMin
-      print("fDist: %f"%(fDist))
+      # print("fDist: %f"%(fDist))
       nMap = (fMap - fMin) / fDist
    
    return nMap
@@ -98,9 +98,125 @@ def mm_entropy(image, fsize, step):
 # Symmetry Functions
 ######################################################################
 
-def symmetry_map(image, size):
-   vSymmetry = symmetry_axis_map(image, 1, size)[1]
-   hSymmetry = symmetry_axis_map(image, 0, size)[1]
+# calculate symmetry by comparing tiles along each strip
+def symmetry_tile_map(image, size):
+   
+   vMap = symmetry_tile_vertical_map(image, 0, size)
+   hMap = symmetry_tile_horizontal_map(image, 0, size)
+
+   sMin = min(np.amin(vMap), np.amin(hMap))
+   sMax = max(np.amax(vMap), np.amax(hMap))
+   sDist = sMax - sMin
+
+   sMap = np.zeros([vMap.shape[0], vMap.shape[1]])
+   sMap = (((vMap - sMin) / sDist) + ((hMap - sMin) / sDist)) / 2
+
+   # normalize
+   # print("sMin: %f, sMax: %f, sDist: %f"%(sMin, sMax, sDist))
+   # if sDist != 0:
+   #    sMap = (sMap - sMin) / sDist
+
+   # print(sMap)
+   return sMap
+   # vFrame = symmetry_frame(image, 1, size)
+   # hFrame = symmetry_frame(image, 0, size)
+   # numRows = vFrame[0]
+   # numCols = hFrame[0]
+
+   # for y in range(0, numRows):
+   #    for x in range(0, numCols):
+
+def symmetry_tile_vertical_map(image, axis, size):
+   height, width = image.shape[:2]
+   vFrame = symmetry_frame(image, 1, size)
+   hFrame = symmetry_frame(image, 0, size)
+   numRows = vFrame[0]
+   numCols = hFrame[0]
+   offsetY = vFrame[1]
+   offsetX = hFrame[1]
+
+   sMap = np.zeros([numRows, numCols])
+   # print(sMap.shape)
+   for x in range(0, numCols):
+      for y in range(0, int(numRows / 2)):
+         x1 = offsetX + (x * size)
+         x2 = x1 + size
+         yt1 = offsetY + (y * size)
+         yt2 = yt1 + size
+         yb1 = height - offsetY - ((y+1) * size)
+         yb2 = height - offsetY - (y * size)
+
+         slice1 = image[yt1:yt2, x1:x2]
+         slice2 = image[yb1:yb2, x1:x2]
+
+         sym = np.average(abs(slice1-slice2))
+         sMap[y, x] = sym
+         sMap[numRows - 1 - y, x] = sym
+
+         # print('x: %d, y1: %d, y2: %d'%(x, y, numRows - 1 - y))
+
+   # normalize
+   # sMin = np.amin(sMap)
+   # sMax = np.amax(sMap)
+   # sDist = sMax - sMin
+   # print("sMin: %f, sMax: %f, sDist: %f"%(sMin, sMax, sDist))
+   # if sDist != 0:
+   #    sMap = (sMap - sMin) / sDist
+   
+   # print(sMap)
+
+   return sMap
+
+def symmetry_tile_horizontal_map(image, axis, size):
+   height, width = image.shape[:2]
+   vFrame = symmetry_frame(image, 1, size)
+   hFrame = symmetry_frame(image, 0, size)
+   numRows = vFrame[0]
+   numCols = hFrame[0]
+   offsetY = vFrame[1]
+   offsetX = hFrame[1]
+
+   # print('numRows: %d, numCols: %d'%(numRows, numCols))
+   sMap = np.zeros([numRows, numCols])
+   # print(sMap.shape)
+   for y in range(0, numRows):
+      for x in range(0, int(numCols / 2)):
+         y1 = offsetY + (y * size)
+         y2 = y1 + size
+         xl1 = offsetX + (x * size)
+         xl2 = xl1 + size
+         xr1 = width - offsetX - ((x+1) * size)
+         xr2 = width - offsetX - (x * size)
+
+         # print('xl1: %d, xl2: %d, xr1: %d, xr2: %d'%(xl1, xl2, xr1, xr2))
+
+         slice1 = image[y1:y2, xl1:xl2]
+         slice2 = image[y1:y2, xr1:xr2]
+
+         sym = np.average(abs(slice1-slice2))
+         sMap[y, x] = sym
+         sMap[y, numCols - 1 - x] = sym
+
+         # print('x: %d, y1: %d, y2: %d'%(x, y, numRows - 1 - y))
+
+   # normalize
+   # sMin = np.amin(sMap)
+   # sMax = np.amax(sMap)
+   # sDist = sMax - sMin
+   # print("sMin: %f, sMax: %f, sDist: %f"%(sMin, sMax, sDist))
+   # if sDist != 0:
+   #    sMap = (sMap - sMin) / sDist
+   
+   # print(sMap)
+
+   return sMap
+
+# calculate symmetry by comparing symmetry of full width/height slices
+# across both axis. symmetry from both axis is combined by addition 
+# and normalization
+def symmetry_strip_map(image, size):
+   vSymmetry = symmetry_strip_axis_map(image, 1, size)[1]
+   hSymmetry = symmetry_strip_axis_map(image, 0, size)[1]
    
    sMap = np.zeros([2*vSymmetry.size, 2*hSymmetry.size])
    # sMap = np.zeros([vSymmetry.size, hSymmetry.size])
@@ -137,7 +253,7 @@ def symmetry_map(image, size):
 
 
 # calculate symmetry for an image along either vertical or horz axis
-def symmetry_axis_map(image, axis, size):
+def symmetry_strip_axis_map(image, axis, size):
    frame = symmetry_frame(image, axis, size)
    numRegions = frame[0]
    offset = frame[1]
@@ -206,6 +322,7 @@ def probability_distribution(image, zero2hero = True):
    hist, bins = np.histogram(image.ravel(), 256, [0, 256])
    pd = hist / np.size(image);
    if zero2hero: pd[pd == 0] = 1;
+
    return pd
 
 # get dimensions of output array from a focus scan

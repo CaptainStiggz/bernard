@@ -23,16 +23,41 @@ def test_battery(f):
       print(file)
       f(file)
 
-def symmetry_test(file):
+# NOTE: does not seem useful
+# display symmetry using tile by tile symmetry along row/column axes
+def symmetry_tile_test(file):
    image = cv2.imread(file, 0)
    vsym = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
    hsym = np.copy(vsym)
    tsym = np.copy(vsym)
 
-   size = 20
-   smap = bv.symmetry_map(image, size)
-   vmap = bv.symmetry_axis_map(image, 1, size)
-   hmap = bv.symmetry_axis_map(image, 0, size)
+   size = 50
+   smap = bv.symmetry_tile_map(image, size)
+   vmap = bv.symmetry_tile_vertical_map(image, 1, size)
+   hmap = bv.symmetry_tile_horizontal_map(image, 0, size)
+   # smap = bv.symmetry_strip_map(image, size)
+   # vmap = bv.symmetry_axis_map(image, 1, size)
+   # hmap = bv.symmetry_axis_map(image, 0, size)
+
+   bui.paint_symmetry(tsym, smap, size)
+   bui.paint_symmetry(vsym, vmap, size)
+   bui.paint_symmetry(hsym, hmap, size)
+
+   bui.show_images([image, vsym, hsym, tsym])
+
+# NOTE: does not seem useful
+# display symmetry using first approach, full width/height combined
+# symmetry.
+def symmetry_strip_test(file):
+   image = cv2.imread(file, 0)
+   vsym = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+   hsym = np.copy(vsym)
+   tsym = np.copy(vsym)
+
+   size = 10
+   smap = bv.symmetry_strip_map(image, size)
+   vmap = bv.symmetry_strip_axis_map(image, 1, size)
+   hmap = bv.symmetry_strip_axis_map(image, 0, size)
 
    bui.paint_symmetry(tsym, smap, size)
    bui.paint_axis_symmetry(vsym, vmap, size)
@@ -49,6 +74,65 @@ def color_extraction_test(file):
    #image = np.arange(5*5*3).reshape(5,5,3)
    #image = np.ones([5, 5, 3]) * 255
    bui.show_images([image, bv.extract_blue(image), bv.extract_green(image), bv.extract_red(image)])
+
+
+# sobel derivative filter
+def sobel_filter_test(file):
+
+   blur = cv2.GaussianBlur(image,(3,3),0)
+
+# display entropy of image components
+def partial_entropy_test(file):
+   image = cv2.imread(file, 0)
+   height, width = image.shape[:2]
+   colored_image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+
+   ps = 3
+   sizeY = int(height / ps)
+   sizeX = int(width / ps)
+
+   fsize = 50
+   step = 10
+   fsize = 10
+   step = 5
+   rsize = step
+
+   images = [image]
+   for y in range(0, ps):
+      for x in range(0, ps):
+         y1 = y*sizeY
+         y2 = y1+sizeY
+         x1 = x*sizeX
+         x2 = x1 + sizeX
+
+         nimage = image[y1:y2, x1:x2]
+         emap = bv.entropy_map(nimage, fsize, step)
+         cimage = cv2.cvtColor(nimage, cv2.COLOR_GRAY2RGB)
+         bui.paint_map(cimage, emap, fsize, step, rsize)
+
+         images.append(nimage)
+         images.append(cimage)
+
+   bui.show_images(images)
+
+# display entropy calculations of various focus sizes side by side
+def entropy_focus_test(file):
+   image = cv2.imread(file, 0)
+   image = cv2.GaussianBlur(image,(9,9),0)
+   bui.show_images([image])
+
+   images = [image]
+   for f in [[80, 20], [50, 10], [10, 5], [5, 2]]:
+      fsize = f[0]
+      step = f[1]
+      rsize = step
+
+      emap = bv.entropy_map(image, fsize, step)
+      cimage = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+      bui.paint_map(cimage, emap, fsize, step, rsize)
+      images.append(cimage)
+
+   bui.show_images(images)
 
 # create a map on the image, highest entropy in red, lowest in green
 def entropy_map_test(file):
@@ -69,6 +153,8 @@ def entropy_map_test(file):
 # displays entropy of each color channel individually
 def color_channel_entropy_test(file):
    image = cv2.imread(file, cv2.IMREAD_COLOR)
+   image = cv2.GaussianBlur(image,(3,3),0)
+
    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
    blues = bv.extract_blue(image)
    greens = bv.extract_green(image)
@@ -82,8 +168,8 @@ def color_channel_entropy_test(file):
 
    fsize = 50
    step = 10
-   # fsize = 8
-   # step = 4
+   # fsize = 10
+   # step = 5
    rsize = step
 
    print("eGray: %f eBlue: %f, eGreen: %f, eRed: %f"%(bv.entropy(gray), bv.entropy(blues), bv.entropy(greens), bv.entropy(reds)))
@@ -290,19 +376,21 @@ def test1(file):
 # main
 ######################################################################
 
-file = 'entropy_images/bwv.jpg'
+# file = 'entropy_images/bwv.jpg'
 # file = 'images/symmetrytest.jpg'
-# file = 'bgrtest2.jpg' # color test
+# file = 'images/bgrtest2.jpg' # color test
 # file = 'BSDS300/images/train/87065.jpg' # lizard
 # file = 'BSDS300/images/train/100075.jpg' # bears
-# file = 'BSDS300/images/train/134052.jpg' # leopard
+file = 'BSDS300/images/train/134052.jpg' # leopard
 # file = 'entropygirl.png'
 # file = 'leopard-ecrop.jpg' # leopard
 # file = 'BSDS300/images/train/181018.jpg' # some girl
 # file = 'BSDS300/images/train/15004.jpg' # lady in the market
 
-test_battery(symmetry_test)
-# symmetry_test(file)
+test_battery(entropy_focus_test)
+# partial_entropy_test(file)
+# test_battery(symmetry_tile_test)
+# symmetry_tile_test(file)
 # test_battery(color_channel_entropy_test)
 # color_channel_entropy_test(file)
 # colored_entropy_test(file)

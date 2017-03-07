@@ -25,7 +25,7 @@ def show_images(images):
       shiftY = math.floor(i/3) * height
 
       windowName = 'win%d'%(i)
-      cv2.namedWindow(windowName)
+      cv2.namedWindow(windowName, cv2.WINDOW_AUTOSIZE)
       cv2.moveWindow(windowName, origin[0]+shiftX, origin[1]+shiftY)
       cv2.imshow(windowName, image)
 
@@ -64,6 +64,19 @@ def paint_map(image, fMap, fsize, step, rsize):
       color = (0, int(fGreen * 255), int(fRed * 255))
       offset = (fsize - rsize) / 2
       rect = [int(x + offset), int(y + offset), rsize, rsize]
+      fill_rect(image, rect, color)
+
+def paint_tile_symmetry(image, sMap, size):
+   height, width = image.shape[:2]
+
+   offsetX = bv.symmetry_frame(image, 0, size)[1]
+   offsetY = bv.symmetry_frame(image, 1, size)[1]
+
+   for (y,x), value in np.ndenumerate(sMap):
+      fGreen = value
+      fRed = 1 - fGreen
+      color = (0, int(fGreen * 255), int(fRed * 255))
+      rect = [int(x * size + offsetX), int(y * size + offsetY), size, size]
       fill_rect(image, rect, color)
 
 def paint_symmetry(image, sMap, size):
