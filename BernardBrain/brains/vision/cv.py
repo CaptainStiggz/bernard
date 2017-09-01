@@ -78,8 +78,29 @@ def color_extraction_test(file):
 
 # sobel derivative filter
 def sobel_filter_test(file):
-
+   image = cv2.imread(file, 0)
    blur = cv2.GaussianBlur(image,(3,3),0)
+   laplacian = cv2.Laplacian(image, cv2.CV_64F, 3, 1)
+   sobel = bv.sobel_filter(image, 3)
+   height, width = image.shape[:2]
+
+   # dpi = 80.0
+   # xpixels, ypixels = 800, 800
+
+   # fig = plt.figure(figsize=(height/dpi, width/dpi), dpi=dpi)
+   # fig.figimage(image)
+   # plt.show()
+
+   # plt.subplot(1,3,1),plt.imshow(image,cmap = 'gray')
+   # plt.title('Original'), plt.xticks([]), plt.yticks([])
+   # plt.subplot(1,3,2),plt.imshow(laplacian,cmap = 'gray')
+   # plt.title('Laplacian'), plt.xticks([]), plt.yticks([])
+   # plt.subplot(1,3,3),plt.imshow(sobel,cmap = 'gray')
+   # plt.title('Sobel'), plt.xticks([]), plt.yticks([])
+   # plt.subplot(2,2,4),plt.imshow(sobely,cmap = 'gray')
+   # plt.title('Sobel Y'), plt.xticks([]), plt.yticks([])
+   # plt.show()
+   bui.show_images([image, laplacian, sobel])
 
 # display entropy of image components
 def partial_entropy_test(file):
@@ -168,8 +189,8 @@ def color_channel_entropy_test(file):
 
    fsize = 50
    step = 10
-   # fsize = 10
-   # step = 5
+   fsize = 5
+   step = 2
    rsize = step
 
    print("eGray: %f eBlue: %f, eGreen: %f, eRed: %f"%(bv.entropy(gray), bv.entropy(blues), bv.entropy(greens), bv.entropy(reds)))
@@ -381,18 +402,20 @@ def test1(file):
 # file = 'images/bgrtest2.jpg' # color test
 # file = 'BSDS300/images/train/87065.jpg' # lizard
 # file = 'BSDS300/images/train/100075.jpg' # bears
-file = 'BSDS300/images/train/134052.jpg' # leopard
+# file = 'BSDS300/images/train/134052.jpg' # leopard
 # file = 'entropygirl.png'
 # file = 'leopard-ecrop.jpg' # leopard
-# file = 'BSDS300/images/train/181018.jpg' # some girl
+file = 'BSDS300/images/train/181018.jpg' # some girl
 # file = 'BSDS300/images/train/15004.jpg' # lady in the market
 
-test_battery(entropy_focus_test)
+# test_battery(sobel_filter_test)
+sobel_filter_test(file)
+# test_battery(entropy_focus_test)
 # partial_entropy_test(file)
 # test_battery(symmetry_tile_test)
 # symmetry_tile_test(file)
 # test_battery(color_channel_entropy_test)
-# color_channel_entropy_test(file)
+color_channel_entropy_test(file)
 # colored_entropy_test(file)
 # color_extraction_test(file)
 # line_finder(file)

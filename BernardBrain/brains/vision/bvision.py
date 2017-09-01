@@ -28,6 +28,10 @@ def cross_entropy(file1, file2):
    e = -np.sum(pd2 * lg)
    return e
 
+# calculate entropy using convolution
+# def entropy_filter(image, ksize):
+
+
 # generates an entropy map
 def entropy_map(image, fsize, step):
    return filter_map(image, fsize, step, entropy)
@@ -316,6 +320,15 @@ def symmetry_coords(index, frame, offset, size):
 ######################################################################
 # Misc Functions
 ######################################################################
+
+# sobel filter
+def sobel_filter(image, ksize):
+   sobelx = cv2.Sobel(image,cv2.CV_64F,1,0,ksize=3)
+   scalex = cv2.convertScaleAbs(sobelx)
+   sobely = cv2.Sobel(image,cv2.CV_64F,0,1,ksize=3)
+   scaley = cv2.convertScaleAbs(sobelx)
+   scaled = cv2.addWeighted(scalex, 0.5, scaley, 0.5, 0)
+   return scaled
 
 # normalized probability distribution of grayscale pixel colors
 def probability_distribution(image, zero2hero = True):
