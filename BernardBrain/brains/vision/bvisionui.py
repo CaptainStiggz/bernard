@@ -5,7 +5,7 @@ import math
 import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
-import bvision as bv
+from .bvision import *
 
 ######################################################################
 # UI
@@ -32,6 +32,26 @@ def show_images(images):
       # print("w: %d, h: %d, sx: %d, sy: %d"%(width, height, shiftX, shiftY))
 
    cv2.waitKey(0)
+
+# show images in matplotlib
+def plot_images(images):
+   cv2.destroyAllWindows()
+   fig = plt.figure()
+   plt.axis("off")
+
+   cols = max(1, min(len(images), 3))
+   rows = max(1, math.ceil(len(images) / 3))
+   print("rows: %d cols: %d"%(rows, cols))
+   for i in range(0, len(images)):
+      image = images[i]
+
+      ax = fig.add_subplot(rows, cols, i+1)
+      ax.axis("off")
+      ax.imshow(image)
+
+   plt.show()
+      
+
 
 # draw a box around some rectangle (not a very safe method, might crash)
 def outline_rect(image, rect, color):

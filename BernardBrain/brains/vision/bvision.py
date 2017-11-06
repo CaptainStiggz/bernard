@@ -1,4 +1,8 @@
 import numpy as np
+from scipy import ndimage
+# from scipy import skimage
+import skimage
+#from skimage.util.shape import view_as_window
 import cv2
 import time
 import math
@@ -6,15 +10,237 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
+def timeit(method):
+   def timed(*args, **kw):
+      ts = time.time()
+      result = method(*args, **kw)
+      te = time.time()
+
+      print("%r %2.2f ms"%(method.__name__, (te - ts) * 1000))
+      # if 'log_time' in kw:
+      #    name = kw.get('log_name', method.__name__.upper())
+      #    kw['log_time'][name] = int((te - ts) * 1000)
+      # else:
+      #    print '%r  %2.2f ms' % \
+      #       (method.__name__, (te - ts) * 1000)
+      return result
+   return timed
+
 ######################################################################
 # Entropy Functions
 ######################################################################
 
+def diff_image(image1, image2):
+   height, width = image2.shape[:2]
+   diff = np.zeros([height, width], dtype=np.uint8)
+
+   for yi in range(0, height):
+      for xi in range(0, width):
+         d = float(image2[yi, xi]) - float(image1[yi, xi])
+         diff[yi, xi] = int(abs(d))
+
+   return diff
+
+# kSize = 30 seems good for course detail (320x320ish pixels)
+# kSize = 9 seems good for finer detail
+# outputs a black/white entropy image
+
+@timeit
+def entropy_local(image, ksize = 9):
+   if (not ksize % 2) or ksize < 3:
+      raise Exception("Kernel must be of odd size > 1")
+
+   height, width = image.shape[:2]   
+
+   # @timeit
+   # def calc_e(*args, **kwargs):
+   #    nonlocal height, width
+   #    eMap = np.zeros([height, width])
+   #    for yi in range(0, height):
+   #       for xi in range(0, width):
+   #          region = kernel_region(image, yi, xi, ksize)
+   #          pdf = probability_distribution(region)
+   #          e = 0
+   #          # e = entropy(region)
+   #          #eMap[yi, xi] = e
+   #    return eMap
+   # eMap = calc_e()
+
+   # A = np.arange(6*4).reshape(6,4)
+   # window_shape = (3, 3)
+   # B = skimage.util.shape.view_as_windows(A, window_shape)
+   # print(B.shape)
+   # S = B.sum((-2, -1))
+   # print(S.shape)
+
+   # A = np.array([1, 1, 1, 2, 2, 2, 3, 4, 5])
+   # A = A.reshape((3, 3))
+   # print(A)
+   # B = skimage.util.shape.view_as_windows(A, (2, 2))
+   # print(B.shape)
+   # print(B)
+
+   # A = np.array([[[1, 1, 1],
+   #                [2, 2, 2],
+   #                [3, 4, 5]],
+
+   #               [[2, 3, 5],
+   #                [4, 3, 4],
+   #                [3, 1, 2]]])
+
+   # print(A)
+   # ar2D = A.reshape(-1,A.shape[-2]*A.shape[-1])
+   # c = bincount2D_vectorized(ar2D)
+   # B = c[np.arange(ar2D.shape[0])[:,None], ar2D].reshape(A.shape)
+   # print(B)
+
+   # A = np.array([1, 1, 1, 2, 2, 2, 3, 4, 5])
+   # A = A.reshape((3, 3))
+   # A = skimage.util.shape.view_as_windows(A, (2, 2))
+   # print(A)
+   # ar2D = A.reshape(-1,A.shape[-2]*A.shape[-1])
+   # c = bincount2D_vectorized(ar2D)
+   # B = c[np.arange(ar2D.shape[0])[:,None], ar2D].reshape(A.shape)
+   # print(B)
+
+   # get the number of times a value occurs in each kernel window
+   a = windowed_occurences(image, ksize)
+
+   # convert to probabilities
+   p = a / (ksize * ksize)
+
+   # get the shannon units
+   s = p * np.log2(p)
+   
+   # sum them to calculate entropy
+   e = s.sum((-2, -1))
+   print(e)
+   # print(e)
+   # print(image.shape)
+   # print(e.shape)
+
+
+   # return e
+
+   return normalized_image(e)
+
+@timeit
+def entropy_local_old(image, ksize = 9):
+   if (not ksize % 2) or ksize < 3:
+      raise Exception("Kernel must be of odd size > 1")
+
+   height, width = image.shape[:2]   
+
+   @timeit
+   def calc_e(*args, **kwargs):
+      nonlocal height, width
+      eMap = np.zeros([height, width])
+      for yi in range(0, height):
+         for xi in range(0, width):
+            region = kernel_region(image, yi, xi, ksize)
+            e = entropy(region)
+            eMap[yi, xi] = e
+
+      return eMap
+   eMap = calc_e()
+
+   return normalized_image(eMap)
+
+# replace elements with the number of times they occur in a window
+def windowed_occurences(a, ksize):
+   window_shape = (ksize, ksize)
+   d = math.floor(ksize / 2)
+   a = np.pad(a, (d, d), 'constant', constant_values=(0, 0)) # constant_values=(-1, -1)
+
+   # get the windowed array of shape (a.height, a.width, ksize, ksize)
+   b = skimage.util.shape.view_as_windows(a, window_shape)
+   
+   # replace each element of ksize x ksize kernel with the number of occurances
+   # of that element in the kernel
+   ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
+   c = bincount2D_vectorized(ar2D)
+   d = c[np.arange(ar2D.shape[0])[:, None], ar2D].reshape(b.shape)
+   
+   return d
+
+# https://stackoverflow.com/questions/46256279/bin-elements-per-row-vectorized-2d-bincount-for-numpy/46256361#46256361
+# Vectorized solution (simple but non-performant)
+def bincount2D_vectorized(a):    
+    N = a.max() + 1
+    a_offs = a + np.arange(a.shape[0])[:, None] * N
+    return np.bincount(a_offs.ravel(), minlength=a.shape[0]*N).reshape(-1, N)
+
+# kSize = 30 seems good for course detail (320x320ish pixels)
+# kSize = 9 seems good for finer detail
+# outputs a black/white entropy image
+
+@timeit
+def entropy_global(image, ksize = 9):
+   if (not ksize % 2) or ksize < 3:
+      raise Exception("Kernel must be of odd size > 1")
+
+   # calculate probability histogram
+   pdf = timed_probability_distribution(image)
+
+   # calculate intermediary entropy values
+   partial = timed_shannon_units(image, pdf)
+
+   # calculate mean with convolve
+   # seperable convolution: https://blogs.mathworks.com/steve/2006/10/04/separable-convolution/
+   e = -sum_convolve(partial, ksize)
+
+   # normalize
+   return normalized_image(e)
+   
+
+# sum convolve with a kernel of size ksize
+# example convolution kernel: [(1,1,1), (1,1,1), (1,1,1)]
+@timeit
+def sum_convolve(image, ksize):
+   d = math.floor((ksize / 2))
+   k = np.ones((d, d))
+   return ndimage.convolve(image, k, mode='constant', cval=0.0)
+
+# create an image from arbitrary values, where max value is white, min value is black
+@timeit
+def normalized_image(image):
+   minimum = image.min()
+   maximum = image.max()
+   dist = max(1, image.max() - image.min())
+   normalized = np.round((image - image.min()) / dist * 255)
+   return normalized.astype(dtype=np.uint8)
+
+# create an image where each pixel is the probability of that pixel relative 
+# to the rest of the image
+def pixel_probabilities(image):
+   pass
+
+# create an image where each pixel is the addends of the shannon entropy
+# relative to the rest of the image
+def shannon_units(image, pdf):
+   # mpdf = np.multiply(pdf, np.log2(pdf))
+   mpdf = pdf * np.log2(pdf)
+   return mpdf[image]
+   #f = lambda v: mpdf[v]
+   #f = np.vectorize(f, otypes=[np.float])
+   #return f(image)
+
+@timeit
+def timed_shannon_units(image, pdf):
+   return shannon_units(image, pdf)
+
 # calculate entropy of image
 def entropy(image):
-   pdf = probability_distribution(image);
-   e = -np.sum(pdf * np.log2(pdf))
-   return e
+
+   # we convert 0 entries to 1 so that log2(pdf) evaluates
+   # to 0 ranter than -inf (undefined). 
+   pdf = probability_distribution(image, min(image.size, 256))
+   return -np.sum(pdf * np.log2(pdf))
+
+# calc entropy from a pdf
+# @timeit
+def ent(pdf):
+   return -np.sum(pdf * np.log2(pdf))
 
 # calculate cross-entropy between two regions
 # NOTE: either not working or not useful
@@ -31,6 +257,15 @@ def cross_entropy(file1, file2):
 # calculate entropy using convolution
 # def entropy_filter(image, ksize):
 
+# helper method to get a kernel region given an index
+def kernel_region(image, yi, xi, ksize):
+   height, width = image.shape[:2]
+   offset = math.floor(ksize / 2)
+   yStart = max(0, yi - offset)
+   yEnd = min(height - 1, yi + offset)
+   xStart = max(0, xi - offset)
+   xEnd = min(width - 1, xi + offset)
+   return image[yStart:yEnd, xStart:xEnd]
 
 # generates an entropy map
 def entropy_map(image, fsize, step):
@@ -331,12 +566,16 @@ def sobel_filter(image, ksize):
    return scaled
 
 # normalized probability distribution of grayscale pixel colors
-def probability_distribution(image, zero2hero = True):
+def probability_distribution(image, bins = 256, zero2hero = True):
    hist, bins = np.histogram(image.ravel(), 256, [0, 256])
-   pd = hist / np.size(image);
+   pd = hist / np.size(image)
    if zero2hero: pd[pd == 0] = 1;
 
    return pd
+
+@timeit
+def timed_probability_distribution(image, zero2hero = True):
+   return probability_distribution(image, zero2hero)
 
 # get dimensions of output array from a focus scan
 def focus_dimensions(image, fsize, step):

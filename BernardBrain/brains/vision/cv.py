@@ -14,6 +14,9 @@ from os.path import isfile, join
 # Current Tests
 ######################################################################
 
+def entropy_image(file):
+   image = cv2.imread(file, 0)
+
 # run a test battery on all files in BSD test until user quits
 def test_battery(f):
    folder = 'BSDS300/images/train'
@@ -409,13 +412,13 @@ file = 'BSDS300/images/train/181018.jpg' # some girl
 # file = 'BSDS300/images/train/15004.jpg' # lady in the market
 
 # test_battery(sobel_filter_test)
-sobel_filter_test(file)
+# sobel_filter_test(file)
 # test_battery(entropy_focus_test)
 # partial_entropy_test(file)
 # test_battery(symmetry_tile_test)
 # symmetry_tile_test(file)
 # test_battery(color_channel_entropy_test)
-color_channel_entropy_test(file)
+# color_channel_entropy_test(file)
 # colored_entropy_test(file)
 # color_extraction_test(file)
 # line_finder(file)
