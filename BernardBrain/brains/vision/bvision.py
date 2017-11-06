@@ -1,5 +1,7 @@
 import numpy as np
 from scipy import ndimage
+from numba import njit
+from numba import prange
 # from scipy import skimage
 import skimage
 #from skimage.util.shape import view_as_window
@@ -112,6 +114,8 @@ def entropy_local(image, ksize = 9):
    # get the shannon units
    s = p * np.log2(p)
    
+   # (technically this sum is inaccurate, since values that appear 
+   # more than once get summed multiple times)
    # sum them to calculate entropy
    e = s.sum((-2, -1))
    print(e)
@@ -143,6 +147,7 @@ def entropy_local_old(image, ksize = 9):
 
       return eMap
    eMap = calc_e()
+   print(eMap)
 
    return normalized_image(eMap)
 
@@ -158,17 +163,11 @@ def windowed_occurences(a, ksize):
    # replace each element of ksize x ksize kernel with the number of occurances
    # of that element in the kernel
    ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
+   #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
    c = bincount2D_vectorized(ar2D)
    d = c[np.arange(ar2D.shape[0])[:, None], ar2D].reshape(b.shape)
    
    return d
-
-# https://stackoverflow.com/questions/46256279/bin-elements-per-row-vectorized-2d-bincount-for-numpy/46256361#46256361
-# Vectorized solution (simple but non-performant)
-def bincount2D_vectorized(a):    
-    N = a.max() + 1
-    a_offs = a + np.arange(a.shape[0])[:, None] * N
-    return np.bincount(a_offs.ravel(), minlength=a.shape[0]*N).reshape(-1, N)
 
 # kSize = 30 seems good for course detail (320x320ish pixels)
 # kSize = 9 seems good for finer detail
@@ -744,6 +743,51 @@ def line_finder(file):
    
    cv2.imshow('win1', colored_image)
    cv2.waitKey(0)
+
+# Helper functions for vectorizing bincount
+# https://stackoverflow.com/questions/46256279/bin-elements-per-row-vectorized-2d-bincount-for-numpy/46256361#46256361
+
+# Vectorized solution (simple but non-performant)
+def bincount2D_vectorized(a):    
+    N = a.max() + 1
+    a_offs = a + np.arange(a.shape[0])[:, None] * N
+    return np.bincount(a_offs.ravel(), minlength=a.shape[0]*N).reshape(-1, N)
+
+# Numba solutions
+def bincount2D_numba(a, use_parallel=False, use_prange=False):
+    N = a.max()+1
+    m,n = a.shape
+    out = np.zeros((m,N),dtype=int)
+
+    # Choose fucntion based on args
+    func = bincount2D_numba_func0
+    if use_parallel:
+        if use_prange:
+            func = bincount2D_numba_func2
+        else:
+            func = bincount2D_numba_func1
+    # Run chosen function on input data and output
+    func(a, out, m, n)
+    return out
+
+@njit
+def bincount2D_numba_func0(a, out, m, n):
+    for i in range(m):
+        for j in range(n):
+            out[i,a[i,j]] += 1
+
+@njit(parallel=True)
+def bincount2D_numba_func1(a, out, m, n):
+    for i in range(m):
+        for j in range(n):
+            out[i,a[i,j]] += 1
+
+@njit(parallel=True)
+def bincount2D_numba_func2(a, out, m, n):
+    for i in prange(m):
+        for j in prange(n):
+            out[i,a[i,j]] += 1
+
 
 # def filter_map(image, fsize, step, f, fmm):
 #    fmm = fmm(image, fsize, step)
