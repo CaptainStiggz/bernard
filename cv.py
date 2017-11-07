@@ -3,6 +3,7 @@ import cv2
 import time
 import math
 import matplotlib as mpl
+import skimage
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import BernardBrain.brains.vision.bvision as bv
@@ -436,6 +437,7 @@ file = 'BSDS300/images/train/100075.jpg' # bears
 # entropy_diff("circle1.jpg", "circle2.jpg")
 
 entropy_image(file)
+
 # sobel_filter_test("star.jpg")
 # color_channel_entropy_test(file)
 

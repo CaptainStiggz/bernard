@@ -52,79 +52,43 @@ def entropy_local(image, ksize = 9):
    if (not ksize % 2) or ksize < 3:
       raise Exception("Kernel must be of odd size > 1")
 
-   height, width = image.shape[:2]   
+   window_shape = (ksize, ksize)
+   d = math.floor(ksize / 2)
+   a = np.pad(image, (d, d), 'constant', constant_values=(0, 0)) # constant_values=(-1, -1)
 
-   # @timeit
-   # def calc_e(*args, **kwargs):
-   #    nonlocal height, width
-   #    eMap = np.zeros([height, width])
-   #    for yi in range(0, height):
-   #       for xi in range(0, width):
-   #          region = kernel_region(image, yi, xi, ksize)
-   #          pdf = probability_distribution(region)
-   #          e = 0
-   #          # e = entropy(region)
-   #          #eMap[yi, xi] = e
-   #    return eMap
-   # eMap = calc_e()
-
-   # A = np.arange(6*4).reshape(6,4)
-   # window_shape = (3, 3)
-   # B = skimage.util.shape.view_as_windows(A, window_shape)
-   # print(B.shape)
-   # S = B.sum((-2, -1))
-   # print(S.shape)
-
-   # A = np.array([1, 1, 1, 2, 2, 2, 3, 4, 5])
-   # A = A.reshape((3, 3))
-   # print(A)
-   # B = skimage.util.shape.view_as_windows(A, (2, 2))
-   # print(B.shape)
-   # print(B)
-
-   # A = np.array([[[1, 1, 1],
-   #                [2, 2, 2],
-   #                [3, 4, 5]],
-
-   #               [[2, 3, 5],
-   #                [4, 3, 4],
-   #                [3, 1, 2]]])
-
-   # print(A)
-   # ar2D = A.reshape(-1,A.shape[-2]*A.shape[-1])
-   # c = bincount2D_vectorized(ar2D)
-   # B = c[np.arange(ar2D.shape[0])[:,None], ar2D].reshape(A.shape)
-   # print(B)
-
-   # A = np.array([1, 1, 1, 2, 2, 2, 3, 4, 5])
-   # A = A.reshape((3, 3))
-   # A = skimage.util.shape.view_as_windows(A, (2, 2))
-   # print(A)
-   # ar2D = A.reshape(-1,A.shape[-2]*A.shape[-1])
-   # c = bincount2D_vectorized(ar2D)
-   # B = c[np.arange(ar2D.shape[0])[:,None], ar2D].reshape(A.shape)
-   # print(B)
-
-   # get the number of times a value occurs in each kernel window
-   a = windowed_occurences(image, ksize)
-
-   # convert to probabilities
-   p = a / (ksize * ksize)
-
-   # get the shannon units
-   s = p * np.log2(p)
+   # get the windowed array of shape (a.height, a.width, ksize, ksize)
+   b = skimage.util.shape.view_as_windows(a, window_shape)
    
-   # (technically this sum is inaccurate, since values that appear 
-   # more than once get summed multiple times)
-   # sum them to calculate entropy
-   e = s.sum((-2, -1))
-   print(e)
+   # replace each element of ksize x ksize kernel with the number of occurances
+   # of that element in the kernel
+   ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
+   
+   #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
+   c = bincount2D_vectorized(ar2D)
+   
+   # convert bincount to probabilities and multiply by log2(p)
+   p = c / (ksize * ksize)
+   p[p == 0] = 1
+   s = p * np.log2(p)
+
+   # sum and reshape
+   # e = -np.sum(p, axis=1).reshape(image.shape) # this is an interesting measure...
+   e = -np.sum(s, axis=1).reshape(image.shape)
+
+   # # get the number of times a value occurs in each kernel window
+   # a = windowed_occurences(image, ksize)
+
+   # # convert to probabilities
+   # p = a / (ksize * ksize)
+
+   # # get the shannon units
+   # s = p * np.log2(p)
+   
+   # # (technically this sum is inaccurate, since values that appear 
+   # # more than once get summed multiple times)
+   # # sum them to calculate entropy
+   # e = s.sum((-2, -1))
    # print(e)
-   # print(image.shape)
-   # print(e.shape)
-
-
-   # return e
 
    return normalized_image(e)
 
@@ -133,11 +97,9 @@ def entropy_local_old(image, ksize = 9):
    if (not ksize % 2) or ksize < 3:
       raise Exception("Kernel must be of odd size > 1")
 
-   height, width = image.shape[:2]   
-
    @timeit
    def calc_e(*args, **kwargs):
-      nonlocal height, width
+      height, width = image.shape[:2]   
       eMap = np.zeros([height, width])
       for yi in range(0, height):
          for xi in range(0, width):
@@ -147,11 +109,13 @@ def entropy_local_old(image, ksize = 9):
 
       return eMap
    eMap = calc_e()
-   print(eMap)
+   #print(eMap)
 
-   return normalized_image(eMap)
+   return normalized_image(eMap) 
 
 # replace elements with the number of times they occur in a window
+# returns an array of shape (a.height, a.width, ksize, ksize),
+# with each ksize x ksize window containing counts of how many times that pixel occurred
 def windowed_occurences(a, ksize):
    window_shape = (ksize, ksize)
    d = math.floor(ksize / 2)
@@ -159,10 +123,11 @@ def windowed_occurences(a, ksize):
 
    # get the windowed array of shape (a.height, a.width, ksize, ksize)
    b = skimage.util.shape.view_as_windows(a, window_shape)
-   
+   print(b.shape)
    # replace each element of ksize x ksize kernel with the number of occurances
    # of that element in the kernel
    ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
+   print(ar2D.shape)
    #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
    c = bincount2D_vectorized(ar2D)
    d = c[np.arange(ar2D.shape[0])[:, None], ar2D].reshape(b.shape)
@@ -748,10 +713,11 @@ def line_finder(file):
 # https://stackoverflow.com/questions/46256279/bin-elements-per-row-vectorized-2d-bincount-for-numpy/46256361#46256361
 
 # Vectorized solution (simple but non-performant)
-def bincount2D_vectorized(a):    
-    N = a.max() + 1
-    a_offs = a + np.arange(a.shape[0])[:, None] * N
-    return np.bincount(a_offs.ravel(), minlength=a.shape[0]*N).reshape(-1, N)
+def bincount2D_vectorized(a):
+   print("bincount2D_vectorized:")
+   N = a.max() + 1
+   a_offs = a + np.arange(a.shape[0])[:, None] * N
+   return np.bincount(a_offs.ravel(), minlength=a.shape[0]*N).reshape(-1, N)
 
 # Numba solutions
 def bincount2D_numba(a, use_parallel=False, use_prange=False):
