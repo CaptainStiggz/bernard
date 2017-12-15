@@ -125,7 +125,6 @@ class Network(object):
          mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
          for mini_batch in mini_batches:
             self.update_mini_batch(mini_batch, eta)
-            return
          if test_data:
             print("Epoch {0}: {1} / {2}".format(j, self.evaluate(test_data), n_test))
          else:
@@ -139,10 +138,8 @@ class Network(object):
       nabla_b = [np.zeros(layer.b.shape) for layer in self.layers]
       nabla_w = [np.zeros(layer.w.shape) for layer in self.layers]
 
-      dnb, dnw = self.backprop_parallel(mini_batch)
-
       for x, y in mini_batch:
-         delta_nabla_b, delta_nabla_w = self.backprop_serial(x, y)
+         delta_nabla_b, delta_nabla_w = self.backprop(x, y)
          nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
          nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
@@ -150,109 +147,7 @@ class Network(object):
          self.layers[i].w -= (eta / len(mini_batch)) * nabla_w[i]
          self.layers[i].b -= (eta / len(mini_batch)) * nabla_b[i]
 
-   def backprop_parallel(self, mini_batch):
-      x = np.array([x for x, y in mini_batch])
-      y = np.array([y for x, y in mini_batch])
-
-      print("x.shape:")
-      print(x.shape)
-      print("y.shape:")
-      print(y.shape)
-
-      nabla_b = [np.zeros(layer.b.shape) for layer in self.layers]
-      nabla_w = [np.zeros(layer.w.shape) for layer in self.layers]
-
-      # feedforward
-      activation = x
-      activations = [x] # list to store all the activations, layer by layer
-      zs = [] # list to store all the z vectors, layer by layer
-      for layer in self.layers:
-         print("layer.w.shape:")
-         print(layer.w.shape)
-         print("activation.shape:")
-         print(activation.shape)
-         print("layer.b.shape:")
-         print(layer.b.shape)
-         # d = np.dot(layer.w, activation).transpose().reshape(len(mini_batch), layer.n_out, 1)
-         d = np.dot(layer.w, activation).transpose(1, 0, 2)
-         print("d.shape:")
-         print(d.shape)
-         z = d + layer.b
-         print(z[0][0])
-         zs.append(z)
-         activation = layer.activation_fn(z)
-         activations.append(activation)
-
-      z_parallel = zs
-      act_parallel = activations
-
-      z_temp = []
-      for x, y in mini_batch:
-
-         # feedforward
-         activation = x
-         activations = [x] # list to store all the activations, layer by layer
-         zs = [] # list to store all the z vectors, layer by layer
-         for layer in self.layers:
-            z = np.dot(layer.w, activation) + layer.b
-            if(len(zs) < 1 and len(z_temp) < 1): print(z[0])
-            zs.append(z)
-            activation = layer.activation_fn(z)
-            activations.append(activation)
-
-         z_temp.append(zs)
-
-      z_serial = [[], []]
-      for zs in z_temp: # 10 batches
-         for i in range(len(zs)): # 2 layers
-            z_serial[i].append(zs[i])
-
-      z_serial = [np.array(z) for z in z_serial]
-
-      # print("z_serial.shape")
-      # z_serial = np.array(z_serial)
-      # print(z_serial.shape)
-
-      print("FINAL COMPARISON:")
-      print(len(z_serial))
-      print(len(z_parallel))
-      for i in range(len(z_serial)):
-         print(z_parallel[i].shape)
-         print(z_serial[i].shape)
-         print(np.allclose(z_serial[i], z_parallel[i]))
-
-         # for j in range(z_serial[i].shape[0]):
-         #    for k in range(z_serial[i].shape[1]):
-         #       print("dtype: {0}, {1}".format(z_serial[i][j][k].dtype, z_parallel[i][j][k].dtype))
-         #       if(z_serial[i][j][k] == z_parallel[i][j][k]):
-         #          print("TRUE: {0} == {1}".format(z_serial[i][j][k], z_parallel[i][j][k]))
-         #       else:
-         #          print("FALSE: {0} != {1}".format(z_serial[i][j][k], z_parallel[i][j][k]))
-
-      return
-
-      # backward pass
-      final_layer = self.layers[-1]
-      delta = self.d_cost(activations[-1], y) * final_layer.d_activation_fn(zs[-1])
-      nabla_b[-1] = delta
-      nabla_w[-1] = np.dot(delta, activations[-2].transpose())
-      # Note that the variable l in the loop below is used a little
-      # differently to the notation in Chapter 2 of the book.  Here,
-      # l = 1 means the last layer of neurons, l = 2 is the
-      # second-last layer, and so on.  It's a renumbering of the
-      # scheme in the book, used here to take advantage of the fact
-      # that Python can use negative indices in lists.
-      for l in range(2, self.num_layers):
-         layer = self.layers[-l+1]
-         z = zs[-l]
-         sp = layer.d_activation_fn(z)
-         delta = np.dot(layer.w.transpose(), delta) * sp
-         nabla_b[-l] = delta
-         nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
-      
-      return (nabla_b, nabla_w)      
-
-   def backprop_serial(self, x, y):
+   def backprop(self, x, y):
       """Return a tuple ``(nabla_b, nabla_w)`` representing the
       gradient for the cost function C_x.  ``nabla_b`` and
       ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
@@ -265,7 +160,7 @@ class Network(object):
       activations = [x] # list to store all the activations, layer by layer
       zs = [] # list to store all the z vectors, layer by layer
       for layer in self.layers:
-         z = np.dot(layer.w, activation) + layer.b
+         z = np.dot(layer.w, activation)+layer.b
          zs.append(z)
          activation = layer.activation_fn(z)
          activations.append(activation)
@@ -305,26 +200,11 @@ class Network(object):
 
 @timeit
 def test():
-   # a = np.arange(6.).reshape(2, 3)
-   # b = np.arange(6.).reshape(3, 2)
-
-   # s = np.dot(a,b)
-
-   # print(s.shape)
-   # print(s)
-
-   # c = np.array([a.reshape(6,1) for x in range(10)])
-   # d = np.array([b for x in range(10)])
-   # print(a.shape)
-   # print(d.shape)
-   # #print(np.tensordot(c,d))
-   # #print(np.tensordot(a, d, axes=[[0, 1], [1, 2]]))
-   # print(np.dot(a,d).transpose(1, 0, 2))
-
    training_data, validation_data, test_data = load_mnist_data()
 
    net = Network([FullyConnectedLayer((784, 30)), FullyConnectedLayer((30, 10))])
-   net.SGD(training_data, 5, 10, 3.0, test_data=test_data)
+   #net = Network([784, 30, 10])
+   net.SGD(training_data, 30, 10, 3.0, test_data=test_data)
    #print(net.feedforward(np.random.normal(loc=0.0, scale=1.0, size=(784,1))))
 
 test()
