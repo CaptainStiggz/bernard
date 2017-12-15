@@ -12,10 +12,11 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
+# timeit decorator
 def timeit(method):
-   def timed(*args, **kw):
+   def timed(*args, **kwargs):
       ts = time.time()
-      result = method(*args, **kw)
+      result = method(*args, **kwargs)
       te = time.time()
 
       print("%r %2.2f ms"%(method.__name__, (te - ts) * 1000))
@@ -52,12 +53,11 @@ def entropy_local(image, ksize = 9):
    if (not ksize % 2) or ksize < 3:
       raise Exception("Kernel must be of odd size > 1")
 
-   window_shape = (ksize, ksize)
    d = math.floor(ksize / 2)
    a = np.pad(image, (d, d), 'constant', constant_values=(0, 0)) # constant_values=(-1, -1)
 
    # get the windowed array of shape (a.height, a.width, ksize, ksize)
-   b = skimage.util.shape.view_as_windows(a, window_shape)
+   b = skimage.util.shape.view_as_windows(a, (ksize, ksize))
    
    # replace each element of ksize x ksize kernel with the number of occurances
    # of that element in the kernel
@@ -75,64 +75,7 @@ def entropy_local(image, ksize = 9):
    # e = -np.sum(p, axis=1).reshape(image.shape) # this is an interesting measure...
    e = -np.sum(s, axis=1).reshape(image.shape)
 
-   # # get the number of times a value occurs in each kernel window
-   # a = windowed_occurences(image, ksize)
-
-   # # convert to probabilities
-   # p = a / (ksize * ksize)
-
-   # # get the shannon units
-   # s = p * np.log2(p)
-   
-   # # (technically this sum is inaccurate, since values that appear 
-   # # more than once get summed multiple times)
-   # # sum them to calculate entropy
-   # e = s.sum((-2, -1))
-   # print(e)
-
    return normalized_image(e)
-
-@timeit
-def entropy_local_old(image, ksize = 9):
-   if (not ksize % 2) or ksize < 3:
-      raise Exception("Kernel must be of odd size > 1")
-
-   @timeit
-   def calc_e(*args, **kwargs):
-      height, width = image.shape[:2]   
-      eMap = np.zeros([height, width])
-      for yi in range(0, height):
-         for xi in range(0, width):
-            region = kernel_region(image, yi, xi, ksize)
-            e = entropy(region)
-            eMap[yi, xi] = e
-
-      return eMap
-   eMap = calc_e()
-   #print(eMap)
-
-   return normalized_image(eMap) 
-
-# replace elements with the number of times they occur in a window
-# returns an array of shape (a.height, a.width, ksize, ksize),
-# with each ksize x ksize window containing counts of how many times that pixel occurred
-def windowed_occurences(a, ksize):
-   window_shape = (ksize, ksize)
-   d = math.floor(ksize / 2)
-   a = np.pad(a, (d, d), 'constant', constant_values=(0, 0)) # constant_values=(-1, -1)
-
-   # get the windowed array of shape (a.height, a.width, ksize, ksize)
-   b = skimage.util.shape.view_as_windows(a, window_shape)
-   print(b.shape)
-   # replace each element of ksize x ksize kernel with the number of occurances
-   # of that element in the kernel
-   ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
-   print(ar2D.shape)
-   #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
-   c = bincount2D_vectorized(ar2D)
-   d = c[np.arange(ar2D.shape[0])[:, None], ar2D].reshape(b.shape)
-   
-   return d
 
 # kSize = 30 seems good for course detail (320x320ish pixels)
 # kSize = 9 seems good for finer detail
@@ -205,6 +148,18 @@ def entropy(image):
 # @timeit
 def ent(pdf):
    return -np.sum(pdf * np.log2(pdf))
+
+# normalized probability distribution of grayscale pixel colors
+def probability_distribution(image, bins = 256, zero2hero = True):
+   hist, bins = np.histogram(image.ravel(), 256, [0, 256])
+   pd = hist / np.size(image)
+   if zero2hero: pd[pd == 0] = 1;
+
+   return pd
+
+@timeit
+def timed_probability_distribution(image, zero2hero = True):
+   return probability_distribution(image, zero2hero)
 
 # calculate cross-entropy between two regions
 # NOTE: either not working or not useful
@@ -529,18 +484,6 @@ def sobel_filter(image, ksize):
    scaled = cv2.addWeighted(scalex, 0.5, scaley, 0.5, 0)
    return scaled
 
-# normalized probability distribution of grayscale pixel colors
-def probability_distribution(image, bins = 256, zero2hero = True):
-   hist, bins = np.histogram(image.ravel(), 256, [0, 256])
-   pd = hist / np.size(image)
-   if zero2hero: pd[pd == 0] = 1;
-
-   return pd
-
-@timeit
-def timed_probability_distribution(image, zero2hero = True):
-   return probability_distribution(image, zero2hero)
-
 # get dimensions of output array from a focus scan
 def focus_dimensions(image, fsize, step):
    height, width = image.shape[:2]
@@ -654,6 +597,43 @@ def hybrid_map(image, fsize, step):
 # Old & Unused
 ######################################################################
 
+@timeit
+def entropy_local_old(image, ksize = 9):
+   if (not ksize % 2) or ksize < 3:
+      raise Exception("Kernel must be of odd size > 1")
+
+   # THIS IS AN INTERESTING APPROACH AND MAY STILL BE USEFUL
+   # # get the number of times a value occurs in each kernel window
+   # a = windowed_occurences(image, ksize)
+
+   # # convert to probabilities
+   # p = a / (ksize * ksize)
+
+   # # get the shannon units
+   # s = p * np.log2(p)
+   
+   # # (technically this sum is inaccurate, since values that appear 
+   # # more than once get summed multiple times)
+   # # sum them to calculate entropy
+   # e = s.sum((-2, -1))
+   # print(e)
+
+   @timeit
+   def calc_e(*args, **kwargs):
+      height, width = image.shape[:2]   
+      eMap = np.zeros([height, width])
+      for yi in range(0, height):
+         for xi in range(0, width):
+            region = kernel_region(image, yi, xi, ksize)
+            e = entropy(region)
+            eMap[yi, xi] = e
+
+      return eMap
+   eMap = calc_e()
+   #print(eMap)
+
+   return normalized_image(eMap)
+
 # some ad-hoc box filter
 def box_filter(image, res):
    sqr = res*res
@@ -708,6 +688,29 @@ def line_finder(file):
    
    cv2.imshow('win1', colored_image)
    cv2.waitKey(0)
+
+######################################################################
+# Helper functions
+######################################################################
+
+# replace elements with the number of times they occur in a window
+# returns an array of shape (a.height, a.width, ksize, ksize),
+# with each ksize x ksize window containing counts of how many times that pixel occurred
+def windowed_occurences(a, ksize):
+   window_shape = (ksize, ksize)
+   d = math.floor(ksize / 2)
+   a = np.pad(a, (d, d), 'constant', constant_values=(0, 0)) # constant_values=(-1, -1)
+
+   # get the windowed array of shape (a.height, a.width, ksize, ksize)
+   b = skimage.util.shape.view_as_windows(a, window_shape)
+
+   # replace each element of ksize x ksize kernel with the number of occurances
+   # of that element in the kernel
+   ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
+
+   #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
+   c = bincount2D_vectorized(ar2D)
+   return c[np.arange(ar2D.shape[0])[:, None], ar2D].reshape(b.shape)  
 
 # Helper functions for vectorizing bincount
 # https://stackoverflow.com/questions/46256279/bin-elements-per-row-vectorized-2d-bincount-for-numpy/46256361#46256361

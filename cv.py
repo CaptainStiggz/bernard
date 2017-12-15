@@ -20,10 +20,9 @@ def entropy_image(file):
    blur = cv2.GaussianBlur(image, (5,5), 0)
 
    global_entropy = bv.entropy_global(blur, 9)
-   local_entropy = bv.entropy_local(blur, 9)
-   leold = bv.entropy_local_old(blur, 9)
+   local_entropy = bv.entropy_local(blur, 3)
    
-   bui.show_images([image, blur, global_entropy, local_entropy, leold])
+   bui.show_images([image, blur, global_entropy, local_entropy])
 
 def entropy_diff(file1, file2):
    image1 = cv2.imread(file1, 0)
@@ -425,12 +424,12 @@ def test1(file):
 # file = 'images/symmetrytest.jpg'
 # file = 'images/bgrtest2.jpg' # color test
 # file = 'BSDS300/images/train/87065.jpg' # lizard
-file = 'BSDS300/images/train/100075.jpg' # bears
+# file = 'BSDS300/images/train/100075.jpg' # bears
 # file = 'BSDS300/images/train/134052.jpg' # leopard
 # file = "circletest.png"
 # file = 'entropygirl.png'
 # file = 'leopard-ecrop.jpg' # leopard
-# file = 'BSDS300/images/train/181018.jpg' # some girl
+file = 'BSDS300/images/train/181018.jpg' # some girl
 # file = 'BSDS300/images/train/15004.jpg' # lady in the market
 
 # entropy_image("star.jpg")
