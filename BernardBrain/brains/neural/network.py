@@ -37,6 +37,7 @@ def timeit(method):
    return timed
 
 #### Load the MNIST data
+
 def load_data_shared(filename="../../data/mnist.pkl.gz"):
    f = gzip.open(filename, 'rb')
    training_data, validation_data, test_data = cPickle.load(f, encoding='latin1')
@@ -69,36 +70,203 @@ def sigmoid(z):
 
 def d_sigmoid(z):
    """Derivative of the sigmoid function"""
-   return sigmoid(z) * (1 - sigmoid(z))
+   return sigmoid(z) * (1.0 - sigmoid(z))
 
-def ReLU(z):
-   """The rectified linear unit (ReLU) function"""
-   return np.maximum(z, 0)
-   #z[z < 0] = 0
-   #return z
+# def ReLU(z):
+#    """The rectified linear unit (ReLU) function"""
+#    return np.maximum(z, 0.0)
+#    #z[z < 0] = 0
+#    #return z
 
-def d_ReLU(z):
-   """Derivative of the ReLU function"""
-   z[z < 0] = 0
-   z[z > 0] = 1
-   return z
-   #return 0 if (z <= 0) else 1
+# def d_ReLU(z):
+#    """Derivative of the ReLU function"""
+#    z[z < 0.0] = 0.0
+#    z[z > 0.0] = 1.0
+#    return z
+#    #return 0 if (z <= 0) else 1
 
-def d_activation(activation_fn):
-   if activation_fn.__name__ == "sigmoid":
-      return d_sigmoid
-   elif activation_fn.__name__ == "ReLU":
-      return d_ReLU
-   else:
-      raise Exception("Unrecognized activation function.")
+# def d_quadratic(a, y):
+#    """Derivative of the quadratic cost function"""
+#    t = (a - y)
+#    print("ACTIVATION:")
+#    print(a)
+#    print("Y:")
+#    print(y)
+#    print("COST:")
+#    print(t)
+#    return t
+
+# def d_cross_entropy(a, y):
+#    """Derivative of the cross entropy cost function"""
+#    #return (a - y) / (a * a - a)
+#    # print(np.divide((a - y), (np.square(a) - a)))
+#    t = np.divide((a - y), (np.square(a) - a))
+#    print("ACTIVATION:")
+#    print(a)
+#    print("Y:")
+#    print(y)
+#    print("COST:")
+#    print(t)
+#    return t
+#    #return (a - y)
+#    #return np.divide((a - y), (np.square(a) - a))
+#    # print(a.shape)
+#    #return np.true_divide((a - y), (np.multiply(a, a) - a))
+
+# def d_activation(activation_fn):
+#    if activation_fn.__name__ == "sigmoid":
+#       return d_sigmoid
+#    elif activation_fn.__name__ == "ReLU":
+#       return d_ReLU
+#    else:
+#       raise Exception("Unrecognized activation function.")
+
+# def d_cost(cost_fn):
+#    if cost_fn.__name__ == "quadratic":
+#       return d_quadratic
+#    elif cost_fn.__name__ == "cross_entropy":
+#       return d_cross_entropy
+#    else:
+#       raise Exception("Unrecognized cost function.")
+
+#### Define the activation functions
+
+class SigmoidActivation(object):
+
+   @staticmethod
+   def fn(z):
+      """Return the sigmoid function for input ``z``.
+
+      """
+      return sigmoid(z)
+
+   @staticmethod
+   def df(z):
+      """Return the derivative of the sigmoid function for
+      input ``z``.
+
+      """
+      return sigmoid(z) * (1.0 - sigmoid(z))
+
+class ReLUActivation(object):
+
+   @staticmethod
+   def fn(z):
+      """Return the sigmoid function for input ``z``.
+
+      """
+      z[z <= 0.0] = 0.0
+      return z
+
+   @staticmethod
+   def df(z):
+      """Return the derivative of the sigmoid function for
+      input ``z``.
+
+      """
+      z[z <= 0.0] = 0.0
+      z[z > 0.0] = 1.0
+      return z
+
+class SoftmaxActivation(object):
+
+   @staticmethod
+   def fn(z):
+      """Return the softmax function for input ``z``.
+      Note that we shift it for numerical stability to avoid overflowing
+      float64 datatype.
+
+      """
+      
+      # TODO: this is kindo of a hack if check
+
+      if len(z.shape) < 3: # serial version
+         expz = np.exp(z - np.max(z))
+         return expz / np.sum(expz)
+
+      else: # parallel version
+         expz = np.exp((z.transpose(1, 0, 2) - np.max(z, axis=1)).transpose(1, 0, 2))
+         sumz = np.sum(expz, axis=1)
+         return (expz.transpose(1, 0, 2) / sumz).transpose(1, 0, 2)
+
+   @staticmethod
+   def df(z):
+      """Return the derivative of the softmax function for
+      input ``z``.
+
+      """
+      
+      # TODO: this is not the actual derivative, it's a hack that works with LogLikelihood
+      return 1
+
+#### Define the cost functions
+
+class QuadraticCost(object):
+
+   @staticmethod
+   def fn(a, y):
+      """Return the quadratic cost associated with an output ``a`` and 
+      desired output ``y``.
+
+      """
+      return 0.5 * np.linalg.norm(a - y)**2
+
+   @staticmethod
+   def delta(z, a, y):
+      """Return the error delta from the output layer."""
+      return (a - y) * d_sigmoid(z)
+
+
+class CrossEntropyCost(object):
+
+   @staticmethod
+   def fn(a, y):
+      """Return the cost associated with an output ``a`` and desired output
+      ``y``.  Note that np.nan_to_num is used to ensure numerical
+      stability.  In particular, if both ``a`` and ``y`` have a 1.0
+      in the same slot, then the expression (1-y)*np.log(1-a)
+      returns nan.  The np.nan_to_num ensures that that is converted
+      to the correct value (0.0).
+
+      """
+      return np.sum(np.nan_to_num(-y * np.log(a) - (1 - y) * np.log(1 - a)))
+
+   @staticmethod
+   def delta(z, a, y):
+      """Return the error delta from the output layer.  Note that the
+      parameter ``z`` is not used by the method.  It is included in
+      the method's parameters in order to make the interface
+      consistent with the delta method for other cost classes.
+
+      """
+      return (a - y)
+
+class LogLikelihoodCost(object):
+
+   @staticmethod
+   def fn(a, y):
+      """Return the cost associated with an output ``a``, where a is
+      the probability distribution corresponding to the correct output
+      ``y``. For example, a[0] is the probability the output corresponds
+      to y[0]
+
+      """
+      return -np.log(a)
+
+   @staticmethod
+   def delta(z, a, y):
+      """Return the error delta from the output layer."""
+      return (a - y)
+
+#### Define the available layer types
 
 class FullyConnectedLayer(object):
 
-   def __init__(self, n_in, n_out, activation_fn=sigmoid, p_dropout=0.0):
+   def __init__(self, n_in, n_out, activation=SigmoidActivation, cost=CrossEntropyCost, p_dropout=0.0):
       self.n_in = n_in
       self.n_out = n_out
-      self.activation_fn = activation_fn
-      self.d_activation_fn = d_activation(activation_fn)
+      self.activation = activation
+      self.cost = cost
       self.p_dropout = p_dropout
 
       # TODO: sllow different weight initialization techniques
@@ -107,8 +275,15 @@ class FullyConnectedLayer(object):
 
 class SoftmaxLayer(object):
 
-   def __init__(self, n_in, n_out, p_dropout=0.0):
-      pass
+   def __init__(self, n_in, n_out, activation=SoftmaxActivation, cost=LogLikelihoodCost, p_dropout=0.0):
+      self.n_in = n_in
+      self.n_out = n_out
+      self.activation = activation
+      self.cost = cost
+      self.p_dropout = p_dropout
+
+      self.w = np.zeros((n_out, n_in), dtype=global_dtype)
+      self.b = np.zeros((n_out, 1), dtype=global_dtype)
 
 class Network(object):
 
@@ -129,7 +304,7 @@ class Network(object):
    def feedforward(self, a):
       """Return the output of the network if ``a`` is input."""
       for layer in self.layers:
-         a = layer.activation_fn(np.dot(layer.w, a) + layer.b)
+         a = layer.activation.fn(np.dot(layer.w, a) + layer.b)
       return a
 
    def SGD(self, training_data, epochs, mini_batch_size, eta, test_data=None):
@@ -191,78 +366,87 @@ class Network(object):
          # z = np.dot(layer.w, activation).transpose(1, 0, 2) + layer.b
          z = np.matmul(layer.w, activation) + layer.b
          zs.append(z)
-         activation = layer.activation_fn(z)
+         activation = layer.activation.fn(z)
          activations.append(activation)
 
       # TODO: any way to speed this up further?
       # backward pass
-      delta = self.d_cost(activations[-1], y) * self.layers[-1].d_activation_fn(zs[-1])
+      L = self.layers[-1]
+      z = zs[-1]
+      a = activations[-1]
+      # print(a.shape)
+      # print(np.sum(a, axis=1))
+      delta = L.cost.delta(z, a, y) * L.activation.df(a)
       nabla_b[-1] = delta
       nabla_w[-1] = np.matmul(delta, activations[-2].transpose(0, 2, 1))
       for l in range(2, self.num_layers):
          w = self.layers[-l+1].w
          z = zs[-l]
-         delta = np.matmul(w.transpose(), delta) * self.layers[-l].d_activation_fn(z)
+         da = self.layers[-l].activation.df(z)
+         delta = np.matmul(w.transpose(), delta) * da
          nabla_b[-l] = delta
          nabla_w[-l] = np.matmul(delta, activations[-l-1].transpose(0, 2, 1))
 
       return (nabla_b, nabla_w)      
 
-   # def update_mini_batch_serial(self, mini_batch, eta):
-   #    """Update the network's weights and biases by applying
-   #    gradient descent using backpropagation to a single mini batch.
-   #    The ``mini_batch`` is a list of tuples ``(x, y)``, and ``eta``
-   #    is the learning rate."""
+   def update_mini_batch_serial(self, mini_batch, eta):
+      """Update the network's weights and biases by applying
+      gradient descent using backpropagation to a single mini batch.
+      The ``mini_batch`` is a list of tuples ``(x, y)``, and ``eta``
+      is the learning rate."""
 
-   #    nabla_b = [np.zeros(layer.b.shape) for layer in self.layers]
-   #    nabla_w = [np.zeros(layer.w.shape) for layer in self.layers]
+      nabla_b = [np.zeros(layer.b.shape) for layer in self.layers]
+      nabla_w = [np.zeros(layer.w.shape) for layer in self.layers]
 
-   #    for x, y in mini_batch:
-   #       delta_nabla_b, delta_nabla_w = self.backprop_serial(x, y)
-   #       nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
-   #       nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+      for x, y in mini_batch:
+         delta_nabla_b, delta_nabla_w = self.backprop_serial(x, y)
+         nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+         nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
-   #    for i in range(len(self.layers)):
-   #       self.layers[i].w -= (eta / len(mini_batch)) * nabla_w[i]
-   #       self.layers[i].b -= (eta / len(mini_batch)) * nabla_b[i]
+      for i in range(len(self.layers)):
+         self.layers[i].w -= (eta / len(mini_batch)) * nabla_w[i]
+         self.layers[i].b -= (eta / len(mini_batch)) * nabla_b[i]
 
-   # def backprop_serial(self, x, y):
-   #    """Return a tuple ``(nabla_b, nabla_w)`` representing the
-   #    gradient for the cost function C_x.  ``nabla_b`` and
-   #    ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
-   #    to ``self.biases`` and ``self.weights``."""
-   #    nabla_b = [np.zeros(layer.b.shape) for layer in self.layers]
-   #    nabla_w = [np.zeros(layer.w.shape) for layer in self.layers]
+   def backprop_serial(self, x, y):
+      """Return a tuple ``(nabla_b, nabla_w)`` representing the
+      gradient for the cost function C_x.  ``nabla_b`` and
+      ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
+      to ``self.biases`` and ``self.weights``."""
+      nabla_b = [np.zeros(layer.b.shape) for layer in self.layers]
+      nabla_w = [np.zeros(layer.w.shape) for layer in self.layers]
 
-   #    # feedforward
-   #    activation = x
-   #    activations = [x] # list to store all the activations, layer by layer
-   #    zs = [] # list to store all the z vectors, layer by layer
-   #    for layer in self.layers:
-   #       z = np.dot(layer.w, activation) + layer.b
-   #       zs.append(z)
-   #       activation = layer.activation_fn(z)
-   #       activations.append(activation)
+      # feedforward
+      activation = x
+      activations = [x] # list to store all the activations, layer by layer
+      zs = [] # list to store all the z vectors, layer by layer
+      for layer in self.layers:
+         z = np.dot(layer.w, activation) + layer.b
+         zs.append(z)
+         activation = layer.activation.fn(z)
+         activations.append(activation)
 
-   #    # backward pass
-   #    final_layer = self.layers[-1]
-   #    delta = self.d_cost(activations[-1], y) * final_layer.d_activation_fn(zs[-1])
-   #    nabla_b[-1] = delta
-   #    nabla_w[-1] = np.dot(delta, activations[-2].transpose())
-   #    # Note that the variable l in the loop below is used a little
-   #    # differently to the notation in Chapter 2 of the book.  Here,
-   #    # l = 1 means the last layer of neurons, l = 2 is the
-   #    # second-last layer, and so on.  It's a renumbering of the
-   #    # scheme in the book, used here to take advantage of the fact
-   #    # that Python can use negative indices in lists.
-   #    for l in range(2, self.num_layers):
-   #       layer = self.layers[-l+1]
-   #       z = zs[-l]
-   #       sp = layer.d_activation_fn(z)
-   #       delta = np.dot(layer.w.transpose(), delta) * sp
-   #       nabla_b[-l] = delta
-   #       nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
-   #    return (nabla_b, nabla_w)
+      # backward pass
+      L = self.layers[-1]
+      z = zs[-1]
+      a = activations[-1]
+      #print(a.shape)
+      delta = L.cost.delta(z, a, y) * L.activation.df(z)
+      nabla_b[-1] = delta
+      nabla_w[-1] = np.dot(delta, activations[-2].transpose())
+      # Note that the variable l in the loop below is used a little
+      # differently to the notation in Chapter 2 of the book.  Here,
+      # l = 1 means the last layer of neurons, l = 2 is the
+      # second-last layer, and so on.  It's a renumbering of the
+      # scheme in the book, used here to take advantage of the fact
+      # that Python can use negative indices in lists.
+      for l in range(2, self.num_layers):
+         w = self.layers[-l+1].w
+         z = zs[-l]
+         da = self.layers[-l].activation.df(z)
+         delta = np.dot(w.transpose(), delta) * da
+         nabla_b[-l] = delta
+         nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
+      return (nabla_b, nabla_w)
 
    def evaluate(self, test_data):
       """Return the number of test inputs for which the neural
@@ -271,11 +455,6 @@ class Network(object):
       neuron in the final layer has the highest activation."""
       test_results = [(np.argmax(self.feedforward(x)), y) for (x, y) in test_data]
       return sum(int(x == y) for (x, y) in test_results)
-
-   def d_cost(self, output_activations, y):
-      """Return the vector of partial derivatives \partial C_x /
-      \partial a for the output activations."""
-      return (output_activations - y)
 
 @timeit
 def test():
@@ -297,17 +476,37 @@ def test():
    # #print(np.tensordot(d, c).shape)
    # #print(np.dot(d, c).reshape(10, 2, 2))
 
+   # a = np.arange(10.)
+   # b = np.arange(10.)
+   # print(a / b)
+   #print(np.sum(a, axis=1))
+   #b = np.arange(6.).reshape(2, 3)
+
+   # z = np.array([[[1], [2], [3], [4], [5]], [[6], [7], [8], [9], [10]], [[11], [12], [13], [14], [15]]] )
+   # # print(z.shape)
+   # # print(len(z.shape)-2)
+   # print(z)
+   # print(np.sum(z, axis=1))
+   # #print(z / np.sum(z, axis=1))
+   # print((z.transpose(1, 0, 2) / np.sum(z, axis=1)).transpose(1, 0, 2))
+   # # print(z.transpose(1, 0, 2))
+   # # print(np.max(z, axis=1))
+   # # print((z.transpose(1, 0, 2) - np.max(z, axis=1)).transpose(1, 0, 2))
+   # # print(np.sum(z, axis=len(z.shape)-2))
+
    training_data, validation_data, test_data = load_mnist_data()
 
    net = Network([
-      FullyConnectedLayer(784, 30, activation_fn=sigmoid),
+      
+      # Hidden Layers
+      FullyConnectedLayer(784, 30, activation=SigmoidActivation),
       # FullyConnectedLayer(784, 30, activation_fn=ReLU),
-      FullyConnectedLayer(30, 10, activation_fn=sigmoid)
+      
+      # Output layer
+      #FullyConnectedLayer(30, 10, activation=SigmoidActivation, cost=CrossEntropyCost)
+      SoftmaxLayer(30, 10)
    ])
-   net.SGD(training_data, 20, 10, 3.0, test_data=test_data)
+   net.SGD(training_data, 30, 10, 3.0, test_data=test_data)
    #print(net.feedforward(np.random.normal(loc=0.0, scale=1.0, size=(784,1))))
 
 test()
-
-# net = network.Network([FullyConnectedLayer(784, 30), FullyConnectedLayer(30, 10)])
-# print(network.feedforward(np.random))
