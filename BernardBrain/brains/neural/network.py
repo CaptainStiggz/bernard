@@ -135,35 +135,25 @@ class SigmoidActivation(object):
 
    @staticmethod
    def fn(z):
-      """Return the sigmoid function for input ``z``.
-
-      """
+      """Return the sigmoid activation function"""
       return sigmoid(z)
 
    @staticmethod
    def df(z):
-      """Return the derivative of the sigmoid function for
-      input ``z``.
-
-      """
+      """Return the derivative of the sigmoid activation function"""
       return sigmoid(z) * (1.0 - sigmoid(z))
 
 class ReLUActivation(object):
 
    @staticmethod
    def fn(z):
-      """Return the sigmoid function for input ``z``.
-
-      """
+      """Return the ReLU activation function"""
       z[z <= 0.0] = 0.0
       return z
 
    @staticmethod
    def df(z):
-      """Return the derivative of the sigmoid function for
-      input ``z``.
-
-      """
+      """Return the derivative of the ReLU activation function"""
       z[z <= 0.0] = 0.0
       z[z > 0.0] = 1.0
       return z
@@ -172,13 +162,10 @@ class SoftmaxActivation(object):
 
    @staticmethod
    def fn(z):
-      """Return the softmax function for input ``z``.
-      Note that we shift it for numerical stability to avoid overflowing
-      float64 datatype.
-
-      """
+      """Return the softmax function. Note that we shift it for numerical 
+      stability to avoid overflowing float64 datatype."""
       
-      # TODO: this is kindo of a hack if check
+      # TODO: this is kind of a hacky if-check
 
       if len(z.shape) < 3: # serial version
          expz = np.exp(z - np.max(z))
@@ -191,12 +178,26 @@ class SoftmaxActivation(object):
 
    @staticmethod
    def df(z):
-      """Return the derivative of the softmax function for
-      input ``z``.
+      """Return the derivative of the softmax function"""
 
-      """
+      #return 1.0
+
+      # TODO: if we want to use softmax as an intermediate layer
+      if len(z.shape) < 3: # serial version
+         expz = np.exp(z - np.max(z))
+         sumz = np.sum(expz)
+
+         # calculate Jacobian da/dz
+         inv_identity = np.ones((z.shape[0], z.shape[0])) - np.identity(z.shape[0])
+         J1 = -(expz.transpose() * expz / sumz) * inv_identity # off-diagonal
+         J2 = (((expz * sumz) * (sumz - expz)) / (sumz * sumz * sumz)) * np.identity(z.shape[0]) # diagonal
+         J = J1 + J2
+         d = J.dot(z)
+         return d
+
+      else: # parallel version
+         pass
       
-      # TODO: this is not the actual derivative, it's a hack that works with LogLikelihood
       return 1
 
 #### Define the cost functions
@@ -206,9 +207,7 @@ class QuadraticCost(object):
    @staticmethod
    def fn(a, y):
       """Return the quadratic cost associated with an output ``a`` and 
-      desired output ``y``.
-
-      """
+      desired output ``y``."""
       return 0.5 * np.linalg.norm(a - y)**2
 
    @staticmethod
@@ -226,9 +225,7 @@ class CrossEntropyCost(object):
       stability.  In particular, if both ``a`` and ``y`` have a 1.0
       in the same slot, then the expression (1-y)*np.log(1-a)
       returns nan.  The np.nan_to_num ensures that that is converted
-      to the correct value (0.0).
-
-      """
+      to the correct value (0.0)."""
       return np.sum(np.nan_to_num(-y * np.log(a) - (1 - y) * np.log(1 - a)))
 
    @staticmethod
@@ -236,9 +233,7 @@ class CrossEntropyCost(object):
       """Return the error delta from the output layer.  Note that the
       parameter ``z`` is not used by the method.  It is included in
       the method's parameters in order to make the interface
-      consistent with the delta method for other cost classes.
-
-      """
+      consistent with the delta method for other cost classes."""
       return (a - y)
 
 class LogLikelihoodCost(object):
@@ -248,15 +243,35 @@ class LogLikelihoodCost(object):
       """Return the cost associated with an output ``a``, where a is
       the probability distribution corresponding to the correct output
       ``y``. For example, a[0] is the probability the output corresponds
-      to y[0]
-
-      """
-      return -np.log(a)
+      to y[0]"""
+      return np.sum(np.nan_to_num(-np.log(a)))
 
    @staticmethod
    def delta(z, a, y):
       """Return the error delta from the output layer."""
       return (a - y)
+
+#### Define the cost functions
+
+class NoRegularization(object):
+
+   @staticmethod
+   def term(w, eta, n):
+      """Return the weight regularization term (unmodified here)
+      where ``w`` is the weights to be updated, ``eta`` is the learning 
+      rate, and ``n`` is the length of the training data. """
+      return w
+
+class L2Regularization(object):
+
+   def __init__(self, lmbda):
+      self.lmbda = lmbda
+
+   def term(self, w, eta, n):
+      """Return the weight regularization term via L2 regularization
+      where ``w`` is the weights to be updated, ``eta`` is the learning 
+      rate, and ``n`` is the length of the training data. """
+      return (1 - eta * (self.lmbda / n)) * w
 
 #### Define the available layer types
 
@@ -287,7 +302,7 @@ class SoftmaxLayer(object):
 
 class Network(object):
 
-   def __init__(self, layers):
+   def __init__(self, layers, regularization=NoRegularization):
       """The list ``sizes`` contains the number of neurons in the
       respective layers of the network.  For example, if the list
       was [2, 3, 1] then it would be a three-layer network, with the
@@ -300,6 +315,7 @@ class Network(object):
       ever used in computing the outputs from later layers."""
       self.num_layers = len(layers) + 1 # len(sizes) #len(layers)
       self.layers = layers
+      self.regularization = regularization
 
    def feedforward(self, a):
       """Return the output of the network if ``a`` is input."""
@@ -324,7 +340,7 @@ class Network(object):
          random.shuffle(training_data)
          mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
          for mini_batch in mini_batches:
-            self.update_mini_batch_parallel(mini_batch, eta)
+            self.update_mini_batch_parallel(mini_batch, eta, len(training_data))
             #self.update_mini_batch_serial(mini_batch, eta)
          if test_data:
             print("Epoch {0}: {1} / {2}".format(j, self.evaluate(test_data), n_test))
@@ -334,15 +350,16 @@ class Network(object):
       for j in range(epochs):
          train_epoch(training_data, mini_batch_size, eta, test_data)
 
-   def update_mini_batch_parallel(self, mini_batch, eta):
+   def update_mini_batch_parallel(self, mini_batch, eta, n):
       """Update the network's weights and biases by applying
       gradient descent using backpropagation to a single mini batch.
-      The ``mini_batch`` is a list of tuples ``(x, y)``, and ``eta``
-      is the learning rate."""
+      The ``mini_batch`` is a list of tuples ``(x, y)``, ``eta``
+      is the learning rate, and ``n`` is the length of the training data."""
 
       dnb, dnw = self.backprop_parallel(mini_batch)
       for i in range(len(self.layers)):
-         self.layers[i].w -= (eta / len(mini_batch)) * np.sum(dnw[i], axis=0)
+         rw = self.regularization.term(self.layers[i].w, eta, n)
+         self.layers[i].w = rw - (eta / len(mini_batch)) * np.sum(dnw[i], axis=0)
          self.layers[i].b -= (eta / len(mini_batch)) * np.sum(dnb[i], axis=0)
 
    def backprop_parallel(self, mini_batch):
@@ -374,9 +391,7 @@ class Network(object):
       L = self.layers[-1]
       z = zs[-1]
       a = activations[-1]
-      # print(a.shape)
-      # print(np.sum(a, axis=1))
-      delta = L.cost.delta(z, a, y) * L.activation.df(a)
+      delta = L.cost.delta(z, a, y)
       nabla_b[-1] = delta
       nabla_w[-1] = np.matmul(delta, activations[-2].transpose(0, 2, 1))
       for l in range(2, self.num_layers):
@@ -430,7 +445,7 @@ class Network(object):
       z = zs[-1]
       a = activations[-1]
       #print(a.shape)
-      delta = L.cost.delta(z, a, y) * L.activation.df(z)
+      delta = L.cost.delta(z, a, y)
       nabla_b[-1] = delta
       nabla_w[-1] = np.dot(delta, activations[-2].transpose())
       # Note that the variable l in the loop below is used a little
@@ -494,19 +509,28 @@ def test():
    # # print((z.transpose(1, 0, 2) - np.max(z, axis=1)).transpose(1, 0, 2))
    # # print(np.sum(z, axis=len(z.shape)-2))
 
+   # z = np.array([[1], [2], [3], [4], [5]])
+   # print(z.shape)
+   # print(z.transpose().shape)
+   # print(z.transpose() * z)
+   # print(np.ones((3, 3)) - np.identity(3))
+
    training_data, validation_data, test_data = load_mnist_data()
 
    net = Network([
       
       # Hidden Layers
-      FullyConnectedLayer(784, 30, activation=SigmoidActivation),
+      FullyConnectedLayer(784, 30, activation=ReLUActivation),
       # FullyConnectedLayer(784, 30, activation_fn=ReLU),
       
       # Output layer
       #FullyConnectedLayer(30, 10, activation=SigmoidActivation, cost=CrossEntropyCost)
       SoftmaxLayer(30, 10)
-   ])
-   net.SGD(training_data, 30, 10, 3.0, test_data=test_data)
+   ], regularization=L2Regularization(5.0))
+
+   # eta = 3.0 seems like a good value for SigmoidActivation
+   # eta = 0.30 seems like an equivalent value for ReLUActivation
+   net.SGD(training_data, 30, 10, 0.02, test_data=test_data)
    #print(net.feedforward(np.random.normal(loc=0.0, scale=1.0, size=(784,1))))
 
 test()
