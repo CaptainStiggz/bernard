@@ -531,6 +531,5 @@ def test():
    # eta = 3.0 seems like a good value for SigmoidActivation
    # eta = 0.30 seems like an equivalent value for ReLUActivation
    net.SGD(training_data, 30, 10, 0.02, test_data=test_data)
-   #print(net.feedforward(np.random.normal(loc=0.0, scale=1.0, size=(784,1))))
 
 test()
