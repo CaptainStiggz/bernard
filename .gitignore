@@ -24,6 +24,7 @@ Pods/
 
 # Test images
 BSDS300/
+sample-data/
 
 # old rmtp server
 rmtplite/
