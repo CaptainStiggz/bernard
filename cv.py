@@ -19,19 +19,28 @@ def entropy_image(file):
    image = cv2.imread(file, 0)
    blur = cv2.GaussianBlur(image, (5,5), 0)
 
-   global_entropy = bv.entropy_global(blur, 9)
-   local_entropy = bv.entropy_local(blur, 3)
+   # global_entropy = bv.entropy_global(blur, 9)
+   # local_entropy = bv.entropy_local(blur, 3)
+   # reduced_entropy = bv.entropy_local(blur, 61, 50)
+   results = bv.entropy_stack(image)
    
-   bui.show_images([image, blur, global_entropy, local_entropy])
+   bui.plot_images([image] + results)
+   # fig = plt.figure()
+
+   # ax1 = fig.add_subplot(121)
+   # ax1.imshow(local_entropy, cmap='gray')
+   # ax2 = fig.add_subplot(122)
+   # ax2.imshow(reduced_entropy, cmap='gray')
+   # plt.show()
 
 def entropy_diff(file1, file2):
    image1 = cv2.imread(file1, 0)
    image2 = cv2.imread(file2, 0)
-   diff = bv.diff_image(image1, image2)
+   diff = bv.image_diff(image1, image2)
 
    # e1 = bv.entropy_image(image1)
    # e2 = bv.entropy_image(image2)
-   # ediff = bv.diff_image(e1, e2)
+   # ediff = bv.image_diff(e1, e2)
 
    bui.show_images([image1, image2, diff])   
 

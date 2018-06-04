@@ -1,10 +1,12 @@
+########################################################################
+# This is 72 characters
+########################################################################
+
 import numpy as np
 from scipy import ndimage
 from numba import njit
 from numba import prange
-# from scipy import skimage
-import skimage
-#from skimage.util.shape import view_as_window
+from skimage.util.shape import view_as_windows
 import cv2
 import time
 import math
@@ -12,8 +14,12 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
-# timeit decorator
 def timeit(method):
+   """A decorator for timing functions. Outputs `function_name` and 
+   corresponding elapsed time for decorated function calls.
+
+   """
+   
    def timed(*args, **kwargs):
       ts = time.time()
       result = method(*args, **kwargs)
@@ -29,68 +35,138 @@ def timeit(method):
       return result
    return timed
 
-######################################################################
+########################################################################
 # Entropy Functions
-######################################################################
-
-def diff_image(image1, image2):
-   height, width = image2.shape[:2]
-   diff = np.zeros([height, width], dtype=np.uint8)
-
-   for yi in range(0, height):
-      for xi in range(0, width):
-         d = float(image2[yi, xi]) - float(image1[yi, xi])
-         diff[yi, xi] = int(abs(d))
-
-   return diff
-
-# kSize = 30 seems good for course detail (320x320ish pixels)
-# kSize = 9 seems good for finer detail
-# outputs a black/white entropy image
+########################################################################
 
 @timeit
-def entropy_local(image, ksize = 9):
+def image_diff(image1, image2):
+   """Calculate the absolute pixel difference between two grayscale 
+   images.
+   
+   Parameters
+   ---------- 
+   image1 : np.array (image)
+   image2 : np.array (image)
+
+   Returns
+   ----------
+   np.array : uint8
+      A numpy array representing the absolute pixel difference 
+      between two images. The output image is "normalized" to values
+      between 0 and 1, where 0 represents no difference, and 1
+      represents the largest individual pixel difference.
+
+   """
+
+   # Casting to floats produces a less noisy output than calculating
+   # the difference of ints.
+   diff = np.absolute(image2.astype(dtype=np.float) 
+                      - image1.astype(dtype=np.float))
+   return diff.astype(dtype=np.uint8)
+
+@timeit
+def entropy_local(image, ksize=9, step=1):
+   """Calculate the local entropy of an image. Local entropy is the 
+   entropy of a windowed region, relative to that window.
+   
+   Notes
+   ----------
+   `ksize` = 30 seems good for course detail (320x320ish pixels)
+   `kSize` = 9 seems good for finer detail
+
+   Parameters
+   ---------- 
+   image : np.array (image)
+   ksize: int
+      The size of the window kernel. This should be and odd
+      integer greater than 1.
+   step: int
+      The window step size. This should be a an integer greater than 0.
+
+   Returns
+   ----------
+   np.array : uint8
+      A numpy array representing the entropy-filtered image. Each pixel 
+      represents the entropy of the corresponding pixel in the original
+      image, where the entropy value is calculated in a 
+      (`ksize` x `ksize`) region. Values are normalized such that white 
+      represents the regions of highest entropy, and black represents 
+      regions of lowest entropy. Calculations are relative to the image.
+
+   """
+
    if (not ksize % 2) or ksize < 3:
-      raise Exception("Kernel must be of odd size > 1")
+      raise Exception("ksize an odd integer greater than 1")
+   if (step < 1):
+      raise Exception("step must be an integer greater than 0")
 
-   d = math.floor(ksize / 2)
-   a = np.pad(image, (d, d), 'constant', constant_values=(0, 0)) # constant_values=(-1, -1)
+   # Pad the image with zeroes.
+   pad = math.floor(ksize / 2)
+   a = np.pad(image, (pad, pad), 'constant', constant_values=(0, 0))
 
-   # get the windowed array of shape (a.height, a.width, ksize, ksize)
-   b = skimage.util.shape.view_as_windows(a, (ksize, ksize))
+   # Get the windowed array of shape (a.height, a.width, ksize, ksize).
+   b = view_as_windows(a, (ksize, ksize), step)
    
-   # replace each element of ksize x ksize kernel with the number of occurances
-   # of that element in the kernel
+   # Replace each element of ksize x ksize kernel with the number of 
+   # occurances of that element in the kernel.
    ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
-   
-   #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
    c = bincount2D_vectorized(ar2D)
+   #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
    
-   # convert bincount to probabilities and multiply by log2(p)
+   # Convert bincount to probabilities and multiply by log2(p)
    p = c / (ksize * ksize)
    p[p == 0] = 1
    s = p * np.log2(p)
 
-   # sum and reshape
-   # e = -np.sum(p, axis=1).reshape(image.shape) # this is an interesting measure...
-   e = -np.sum(s, axis=1).reshape(image.shape)
+   # Replace each window with the sum of values in the window, and
+   # reshape to the size of the original image (if step size = 1) or
+   # scale down if step size > 1.
+   new_shape = tuple(math.ceil(ti/step) for ti in image.shape)
+   e = -np.sum(s, axis=1).reshape(new_shape)
+   # This is an interesting measure...
+   # e = -np.sum(p, axis=1).reshape(image.shape) 
 
    return normalized_image(e)
+
+########################################################################
+@timeit
+def entropy_stack(image):
+   """Generates a list of entropy-filtered images. using `entropy_local`,
+   of various kernel and step sizes.
+
+   Parameters
+   ---------- 
+   image : np.array (image)
+
+   Returns
+   ----------
+   list : np.array : uint8
+      A standard python list of images. Images are filtered by entropy,
+      and contain low, medium, and high resolution results.
+
+   """
+
+   hi_rez = entropy_local(image, 7)
+   medh_rez = entropy_local(image, 15, 8)
+   medl_rez = entropy_local(image, 31, 16)
+   low_rez = entropy_local(image, 63, 40)
+
+   return [hi_rez, medh_rez, medl_rez, low_rez]
 
 # kSize = 30 seems good for course detail (320x320ish pixels)
 # kSize = 9 seems good for finer detail
 # outputs a black/white entropy image
-
 @timeit
 def entropy_global(image, ksize = 9):
    if (not ksize % 2) or ksize < 3:
       raise Exception("Kernel must be of odd size > 1")
 
    # calculate probability histogram
-   pdf = timed_probability_distribution(image)
+   pdf = probability_distribution(image)
 
    # calculate intermediary entropy values
-   partial = timed_shannon_units(image, pdf)
+   partial = shannon_units(image, pdf)
 
    # calculate mean with convolve
    # seperable convolution: https://blogs.mathworks.com/steve/2006/10/04/separable-convolution/
@@ -108,14 +184,25 @@ def sum_convolve(image, ksize):
    k = np.ones((d, d))
    return ndimage.convolve(image, k, mode='constant', cval=0.0)
 
-# create an image from arbitrary values, where max value is white, min value is black
+
 @timeit
 def normalized_image(image):
-   minimum = image.min()
-   maximum = image.max()
-   dist = max(1, image.max() - image.min())
-   normalized = np.round((image - image.min()) / dist * 255)
-   return normalized.astype(dtype=np.uint8)
+   """Normalize values of an `image` to values between 0 and 255, where
+   The smallest value becomes 0 and the largest value becomes 255.
+   
+   Parameters
+   ---------- 
+   image : np.array (image)
+
+   Returns
+   ----------
+   np.array
+      A numpy array representing the normalized image.
+
+   """
+
+   image *= 255.0/image.max() 
+   return image.astype(dtype=np.uint8)
 
 # create an image where each pixel is the probability of that pixel relative 
 # to the rest of the image
@@ -124,6 +211,7 @@ def pixel_probabilities(image):
 
 # create an image where each pixel is the addends of the shannon entropy
 # relative to the rest of the image
+@timeit
 def shannon_units(image, pdf):
    # mpdf = np.multiply(pdf, np.log2(pdf))
    mpdf = pdf * np.log2(pdf)
@@ -131,10 +219,6 @@ def shannon_units(image, pdf):
    #f = lambda v: mpdf[v]
    #f = np.vectorize(f, otypes=[np.float])
    #return f(image)
-
-@timeit
-def timed_shannon_units(image, pdf):
-   return shannon_units(image, pdf)
 
 # calculate entropy of image
 def entropy(image):
@@ -150,16 +234,13 @@ def ent(pdf):
    return -np.sum(pdf * np.log2(pdf))
 
 # normalized probability distribution of grayscale pixel colors
+@timeit
 def probability_distribution(image, bins = 256, zero2hero = True):
    hist, bins = np.histogram(image.ravel(), 256, [0, 256])
    pd = hist / np.size(image)
    if zero2hero: pd[pd == 0] = 1;
 
    return pd
-
-@timeit
-def timed_probability_distribution(image, zero2hero = True):
-   return probability_distribution(image, zero2hero)
 
 # calculate cross-entropy between two regions
 # NOTE: either not working or not useful
@@ -593,9 +674,77 @@ def hybrid_map(image, fsize, step):
    hmap = np.add(cmap, emap)
    return np.divide(hmap, 2)
 
-######################################################################
-# Old & Unused
-######################################################################
+########################################################################
+# Helper functions
+########################################################################
+
+# replace elements with the number of times they occur in a window
+# returns an array of shape (a.height, a.width, ksize, ksize),
+# with each ksize x ksize window containing counts of how many times that pixel occurred
+def windowed_occurences(a, ksize):
+   window_shape = (ksize, ksize)
+   d = math.floor(ksize / 2)
+   a = np.pad(a, (d, d), 'constant', constant_values=(0, 0)) # constant_values=(-1, -1)
+
+   # get the windowed array of shape (a.height, a.width, ksize, ksize)
+   b = view_as_windows(a, window_shape)
+
+   # replace each element of ksize x ksize kernel with the number of occurances
+   # of that element in the kernel
+   ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
+
+   #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
+   c = bincount2D_vectorized(ar2D)
+   return c[np.arange(ar2D.shape[0])[:, None], ar2D].reshape(b.shape)  
+
+# Helper functions for vectorizing bincount
+# https://stackoverflow.com/questions/46256279/bin-elements-per-row-vectorized-2d-bincount-for-numpy/46256361#46256361
+
+# Vectorized solution (simple but non-performant)
+def bincount2D_vectorized(a):
+   print("bincount2D_vectorized:")
+   N = a.max() + 1
+   a_offs = a + np.arange(a.shape[0])[:, None] * N
+   return np.bincount(a_offs.ravel(), minlength=a.shape[0]*N).reshape(-1, N)
+
+# Numba solutions
+def bincount2D_numba(a, use_parallel=False, use_prange=False):
+    N = a.max()+1
+    m,n = a.shape
+    out = np.zeros((m,N),dtype=int)
+
+    # Choose fucntion based on args
+    func = bincount2D_numba_func0
+    if use_parallel:
+        if use_prange:
+            func = bincount2D_numba_func2
+        else:
+            func = bincount2D_numba_func1
+    # Run chosen function on input data and output
+    func(a, out, m, n)
+    return out
+
+@njit
+def bincount2D_numba_func0(a, out, m, n):
+    for i in range(m):
+        for j in range(n):
+            out[i,a[i,j]] += 1
+
+@njit(parallel=True)
+def bincount2D_numba_func1(a, out, m, n):
+    for i in range(m):
+        for j in range(n):
+            out[i,a[i,j]] += 1
+
+@njit(parallel=True)
+def bincount2D_numba_func2(a, out, m, n):
+    for i in prange(m):
+        for j in prange(n):
+            out[i,a[i,j]] += 1
+
+########################################################################
+# Deprecated/Unused functions
+########################################################################
 
 @timeit
 def entropy_local_old(image, ksize = 9):
@@ -688,75 +837,6 @@ def line_finder(file):
    
    cv2.imshow('win1', colored_image)
    cv2.waitKey(0)
-
-######################################################################
-# Helper functions
-######################################################################
-
-# replace elements with the number of times they occur in a window
-# returns an array of shape (a.height, a.width, ksize, ksize),
-# with each ksize x ksize window containing counts of how many times that pixel occurred
-def windowed_occurences(a, ksize):
-   window_shape = (ksize, ksize)
-   d = math.floor(ksize / 2)
-   a = np.pad(a, (d, d), 'constant', constant_values=(0, 0)) # constant_values=(-1, -1)
-
-   # get the windowed array of shape (a.height, a.width, ksize, ksize)
-   b = skimage.util.shape.view_as_windows(a, window_shape)
-
-   # replace each element of ksize x ksize kernel with the number of occurances
-   # of that element in the kernel
-   ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
-
-   #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
-   c = bincount2D_vectorized(ar2D)
-   return c[np.arange(ar2D.shape[0])[:, None], ar2D].reshape(b.shape)  
-
-# Helper functions for vectorizing bincount
-# https://stackoverflow.com/questions/46256279/bin-elements-per-row-vectorized-2d-bincount-for-numpy/46256361#46256361
-
-# Vectorized solution (simple but non-performant)
-def bincount2D_vectorized(a):
-   print("bincount2D_vectorized:")
-   N = a.max() + 1
-   a_offs = a + np.arange(a.shape[0])[:, None] * N
-   return np.bincount(a_offs.ravel(), minlength=a.shape[0]*N).reshape(-1, N)
-
-# Numba solutions
-def bincount2D_numba(a, use_parallel=False, use_prange=False):
-    N = a.max()+1
-    m,n = a.shape
-    out = np.zeros((m,N),dtype=int)
-
-    # Choose fucntion based on args
-    func = bincount2D_numba_func0
-    if use_parallel:
-        if use_prange:
-            func = bincount2D_numba_func2
-        else:
-            func = bincount2D_numba_func1
-    # Run chosen function on input data and output
-    func(a, out, m, n)
-    return out
-
-@njit
-def bincount2D_numba_func0(a, out, m, n):
-    for i in range(m):
-        for j in range(n):
-            out[i,a[i,j]] += 1
-
-@njit(parallel=True)
-def bincount2D_numba_func1(a, out, m, n):
-    for i in range(m):
-        for j in range(n):
-            out[i,a[i,j]] += 1
-
-@njit(parallel=True)
-def bincount2D_numba_func2(a, out, m, n):
-    for i in prange(m):
-        for j in prange(n):
-            out[i,a[i,j]] += 1
-
 
 # def filter_map(image, fsize, step, f, fmm):
 #    fmm = fmm(image, fsize, step)

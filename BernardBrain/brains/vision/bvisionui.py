@@ -37,17 +37,15 @@ def show_images(images):
 def plot_images(images):
    cv2.destroyAllWindows()
    fig = plt.figure()
-   plt.axis("off")
+   #plt.axis("off")
 
    cols = max(1, min(len(images), 3))
    rows = max(1, math.ceil(len(images) / 3))
    print("rows: %d cols: %d"%(rows, cols))
    for i in range(0, len(images)):
-      image = images[i]
-
       ax = fig.add_subplot(rows, cols, i+1)
-      ax.axis("off")
-      ax.imshow(image)
+      #ax.axis("off")
+      ax.imshow(images[i], cmap='gray')
 
    plt.show()
       
