@@ -11,47 +11,292 @@ import BernardBrain.brains.vision.bvisionui as bui
 from os import listdir
 from os.path import isfile, join
 
-######################################################################
+########################################################################
 # Current Tests
-######################################################################
+########################################################################
 
-def entropy_image(file):
+def entropy_value_test():
+   """
+   This is just a sanity check on entropy values calculated for simple
+   arrays.
+
+   """
+
+   a = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+   print(a)
+   print(bv.entropy(a))
+   a = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 2]])
+   print(a)
+   print(bv.entropy(a))
+   a = np.array([[1, 1, 1], [1, 1, 1], [1, 2, 2]])
+   print(a)
+   print(bv.entropy(a))
+   a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+   print(a)
+   print(bv.entropy(a))
+   a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 8]])
+   print(a)
+   print(bv.entropy(a))
+   print(bv.normalize_array(a))
+
+
+def entropy_image_test(file):
+   """Calculates an "entropy stack" of images for an input image. 
+   Displays the original image, along with low, low_medium, high_medium,
+   and high resolution entropy calculations.
+
+   """
+
    image = cv2.imread(file, 0)
    blur = cv2.GaussianBlur(image, (5,5), 0)
-
-   # global_entropy = bv.entropy_global(blur, 9)
-   # local_entropy = bv.entropy_local(blur, 3)
-   # reduced_entropy = bv.entropy_local(blur, 61, 50)
    results = bv.entropy_stack(image)
-   
    bui.plot_images([image] + results)
-   # fig = plt.figure()
 
-   # ax1 = fig.add_subplot(121)
-   # ax1.imshow(local_entropy, cmap='gray')
-   # ax2 = fig.add_subplot(122)
-   # ax2.imshow(reduced_entropy, cmap='gray')
-   # plt.show()
+def entropy_uniqueness_test(file1, file2):
+   """The idea behind this test is to calculate the entropy of two
+   images in sequence, then extract the unique entropy values from each.
+   Then, we filter the unique values down to find unique values that
+   exist in both filtered images, and compare the locations at which
+   those values appeared in the original image. The idea is to try to
+   find "entropy features" that are shared in both images.
 
-def entropy_diff(file1, file2):
+   Notes
+   ----------
+   It's not clear whether or not this is helpful.
+
+   """
+
    image1 = cv2.imread(file1, 0)
+   image1 = cv2.GaussianBlur(image1, (5,5), 0)
+   hi_rez1 = bv.entropy_local(image1, 7, normalize=False)
+
    image2 = cv2.imread(file2, 0)
-   diff = bv.image_diff(image1, image2)
+   image2 = cv2.GaussianBlur(image2, (5,5), 0)
+   hi_rez2 = bv.entropy_local(image2, 7, normalize=False)
 
-   # e1 = bv.entropy_image(image1)
-   # e2 = bv.entropy_image(image2)
-   # ediff = bv.image_diff(e1, e2)
 
-   bui.show_images([image1, image2, diff])   
+   def original_index(index, shape):
+      y = math.floor(index / shape[1])
+      x = index - (y * shape[1])
+      return y, x
+
+   def find_unique(unique, indices, counts):
+      unique_count = 0
+      unique_locations = []
+      unique_values = []
+      for i in range(0, len(counts)):
+         if counts[i] == 1: 
+            unique_count = unique_count + 1
+            unique_locations.append(indices[i])
+            unique_values.append(unique[i])
+      return unique_count, unique_locations, unique_values
+
+   unique, indices, counts = np.unique(hi_rez1, return_index=True, return_counts=True)
+   ucount1, ulocation1, uvalue1 = find_unique(unique, indices, counts)
+   unique, indices, counts = np.unique(hi_rez2, return_index=True, return_counts=True)
+   ucount2, ulocation2, uvalue2 = find_unique(unique, indices, counts)
+
+   print("image1 unique count: %d, image2 unique count: %d"%(ucount1, ucount2))
+
+   shared_feature_locations1 = []
+   shared_feature_locations2 = []
+   for i in range(0, len(uvalue1)):
+      for j in range(0, len(uvalue2)):
+         if uvalue1[i] == uvalue2[j]:
+            y, x = original_index(ulocation1[i], hi_rez1.shape)
+            shared_feature_locations1.append(np.array([y, x]))
+            y, x = original_index(ulocation2[j], hi_rez2.shape)
+            shared_feature_locations2.append(np.array([y, x]))
+            break
+
+   print("found %d shared features"%(len(shared_feature_locations1)))
+   print("first feature:")
+   print(shared_feature_locations1[0])
+   print(shared_feature_locations2[0])
+   print("second feature:")
+   print(shared_feature_locations1[1])
+   print(shared_feature_locations2[1])
+
+   total = np.array([0, 0])
+   for i in range(0, len(shared_feature_locations1)):
+      total = total + (shared_feature_locations2[i] - shared_feature_locations1[i])
+
+   print("total vector:")
+   print(total)
+   print(total.dtype)
+   total = np.divide(total, len(shared_feature_locations1))
+   print("average vector:")
+   print(total)
+
+   bui.plot_images([image1, image2, bv.normalize_array(hi_rez1), bv.normalize_array(hi_rez2)], max_cols=2)
+
+
+########################################################################
+def entropy_diff_test(file1, file2):
+   """Here we simply calculate the raw difference between entropy values
+   calculated from two sequential images.
+
+   Notes
+   ----------
+
+   """
+
+   image1 = cv2.imread(file1, 0)
+   image1 = cv2.GaussianBlur(image1, (5,5), 0)
+   image2 = cv2.imread(file2, 0)
+   image2 = cv2.GaussianBlur(image2, (5,5), 0)
+
+   results1 = bv.entropy_stack(image1, normalize=False)
+   results2 = bv.entropy_stack(image2, normalize=False)
+   #diffs = bv.image_diffs(results1, results2)
+
+   diffs_e = []
+   for i in range(0, len(results1)):
+      diffs_e.append(np.absolute(results2[i] - results1[i]))
+
+   diff_a = np.absolute(image2 - image1)
+
+   normalized1 = list(map(lambda x:bv.normalize_array(x), results1))
+   normalized2 = list(map(lambda x:bv.normalize_array(x), results2))
+
+   bui.plot_images([image1, image2, diff_a, diff_a] + normalized1 + normalized2 + diffs_e, max_cols=4)   
+
+def entropy_sequence_test(location):
+   """Calculates low, low_medium, high_medium, and high entropy 
+   resolution images for a sequence of frames. In this case, we
+   caltulate 4 entropy images for each of two frames. Finally, we
+   calculate the entropy between the two frames. In the output, the top
+   row shows the original frames. The second row shows the entropy
+   images for frame 1, and the third row shows the entropy images for
+   frame 2. The bottom row shows the entropy between the images in
+   rows 2 and 3.
+
+   """ 
+
+   # Load frames from a location
+   def get_frames(location, start_index=0, max_frames=10, step=1):
+      frames = []
+      count = start_index
+      while count < start_index + step * max_frames:
+         image = cv2.imread("%s/frame%d.jpg"%(location, count), 0)
+         image = cv2.GaussianBlur(image, (5,5), 0)
+         frames.append(image)
+         count = count + step
+      return frames
+
+   # Load the frames and calculate the entropy_stack for each frame.
+   frames = get_frames(location, start_index=0, max_frames=200)
+   # e_seq = bv.entropy_sequential(frames)
+   # bui.plot_images([frames[0], frames[-1]]+[e_seq])
+
+   entropy_frames = [[], [], [], []]
+   for frame in frames:
+      e_stack = bv.entropy_stack(frame)
+      for i in range(0, len(e_stack)):
+         entropy_frames[i].append(e_stack[i])
+
+   result = []
+   for e_frame in entropy_frames:
+      result.append(bv.entropy_sequential(e_frame))
+
+   bui.plot_images([frames[0]] + [frames[-1]] + [frames[0]] + [frames[-1]]
+                   + [entropy_frames[0][0]]
+                   + [entropy_frames[1][0]]
+                   + [entropy_frames[2][0]]
+                   + [entropy_frames[3][0]]
+                   + [entropy_frames[0][-1]]
+                   + [entropy_frames[1][-1]]
+                   + [entropy_frames[2][-1]]
+                   + [entropy_frames[3][-1]]
+                   + result, max_cols=4)
+
+def entropy_shift_test(file1, file2):
+   image1 = cv2.imread(file1, 0)
+   image1 = cv2.GaussianBlur(image1, (5,5), 0)
+   image1 = bv.entropy_local(image1, 7, normalize=False)
+   image2 = cv2.imread(file2, 0)
+   image2 = cv2.GaussianBlur(image2, (5,5), 0)
+   image2 = bv.entropy_local(image2, 7, normalize=False)
+
+   print("image1 max: %f"%float(image1.max()))
+   print("image2 max: %f"%float(image2.max()))
+   print("image1 min: %f"%float(image1.min()))
+   print("image2 min: %f"%float(image2.min()))
+   in1 = bv.normalize_array(image1, max_value=255, dtype=np.uint8)
+   in2 = bv.normalize_array(image2, max_value=255, dtype=np.uint8)
+   seq = bv.entropy_sequential([in1, in2], normalize=False)
+   print("seq max: %f"%float(seq.max()))
+   print("seq min: %f"%float(seq.min()))
+   norm1 = bv.normalize_array(seq)
+   #bui.plot_images([in1, in2, norm1])
+   norm2 = bv.normalize_array(seq, max_rel=image1.max())
+   norm3 = bv.normalize_array(seq, max_rel=image2.max())
+   print("norm1 max: %f"%float(norm1.max()))
+   print("norm2 max: %f"%float(norm2.max()))
+   print("norm3 max: %f"%float(norm3.max()))
+   print(norm2.max())
+   bui.plot_images([in1 ,in2, norm1 ,norm2, norm3], norm=mpl.colors.NoNorm())
+
+   # pad = 20
+   # dy = 0
+   # dx = 0
+   # slice1 = image1[pad:-pad, pad:-pad]
+   # slice2 = image2[dy+pad:dy-pad, dx+pad:dx-pad]
+   # bui.plot_images([slice1, slice2, bv.entropy_sequential([slice1, slice2])])
+
+   # print(bv.camera_shift(image1, image2, use_entropy=False))
+
+def entropy_shift_test2(file1, file2):
+   image1 = cv2.imread(file1, 0)
+   image1 = cv2.GaussianBlur(image1, (5,5), 0)
+   image1 = bv.entropy_local(image1, 7)
+   image2 = cv2.imread(file2, 0)
+   image2 = cv2.GaussianBlur(image2, (5,5), 0)
+   image2 = bv.entropy_local(image2, 7)
+
+
+
+def entropy_sequence_test2(location):
+
+   # Load frames from a location
+   def get_frames(location, start_index=0, max_frames=10, step=1):
+      frames = []
+      count = start_index
+      while count < start_index + step * max_frames:
+         image = cv2.imread("%s/frame%d.jpg"%(location, count), 0)
+         image = cv2.GaussianBlur(image, (5,5), 0)
+         frames.append(image)
+         count = count + step
+      return frames
+
+   # Load the frames and calculate the entropy_stack for each frame.
+   frames = get_frames(location, 0, 200)
+   entropy_frames = []
+   for frame in frames:
+      entropy_frames.append(bv.entropy_local(frame, 31, 16))
+
+   result = []
+   for i in range(10, len(entropy_frames)):
+      frame = frames[i]
+      e_frame = entropy_frames[i]
+      sequence = bv.entropy_sequential(entropy_frames[i-10:i])
+      bui.plot_images([frame, e_frame, sequence])   
+      #result.append(bv.entropy_sequential(e_frame))
+
+   
 
 # run a test battery on all files in BSD test until user quits
 def test_battery(f):
-   folder = 'BSDS300/images/train'
+   folder = 'sample-data/BSDS300/images/train'
    files = [f for f in listdir(folder) if isfile(join(folder, f))]
    for file in files:
       file = folder+'/'+file
       print(file)
       f(file)
+
+########################################################################
+# Old Tests
+########################################################################
 
 # NOTE: does not seem useful
 # display symmetry using tile by tile symmetry along row/column axes
@@ -112,7 +357,7 @@ def sobel_filter_test(file):
    blur = cv2.GaussianBlur(image,(3,3),0)
    laplacian = cv2.Laplacian(image, cv2.CV_64F, 3, 1)
    sobel = bv.sobel_filter(image, 3)
-   entropy = bv.entropy_image(image, 7)
+   entropy = bv.entropy_local(image, 7)
    height, width = image.shape[:2]
 
    # dpi = 80.0
@@ -131,7 +376,7 @@ def sobel_filter_test(file):
    # plt.subplot(2,2,4),plt.imshow(sobely,cmap = 'gray')
    # plt.title('Sobel Y'), plt.xticks([]), plt.yticks([])
    # plt.show()
-   bui.show_images([image, laplacian, sobel, entropy])
+   bui.plot_images([image, laplacian, sobel, entropy])
 
 # display entropy of image components
 def partial_entropy_test(file):
@@ -268,10 +513,6 @@ def colored_entropy_test(file):
 
    paint_map(map_image, fmap, fsize, step, rsize)
    show_images([image, gray, blues, greens, reds, map_image])
-
-######################################################################
-# Old Tests
-######################################################################
 
 # calculate contrast of image
 def contrast_test(file):
@@ -425,26 +666,40 @@ def test1(file):
    print("entropy: %f"%(entropy(gray)))
    cv2.waitKey(0)
 
-######################################################################
+########################################################################
 # main
-######################################################################
+########################################################################
 
 # file = 'entropy_images/bwv.jpg'
 # file = 'images/symmetrytest.jpg'
 # file = 'images/bgrtest2.jpg' # color test
-# file = 'BSDS300/images/train/87065.jpg' # lizard
-# file = 'BSDS300/images/train/100075.jpg' # bears
-# file = 'BSDS300/images/train/134052.jpg' # leopard
+# file = 'sample-data/BSDS300/images/train/87065.jpg' # lizard
+# file = 'sample-data/BSDS300/images/train/100075.jpg' # bears
+# file = 'sample-data/BSDS300/images/train/134052.jpg' # leopard
 # file = "circletest.png"
 # file = 'entropygirl.png'
 # file = 'leopard-ecrop.jpg' # leopard
-file = 'BSDS300/images/train/181018.jpg' # some girl
-# file = 'BSDS300/images/train/15004.jpg' # lady in the market
+file = 'sample-data/BSDS300/images/train/181018.jpg' # some girl
+# file = 'sample-data/BSDS300/images/train/15004.jpg' # lady in the market
 
-# entropy_image("star.jpg")
-# entropy_diff("circle1.jpg", "circle2.jpg")
 
-entropy_image(file)
+# Current Tests
+# ---------------
+# entropy_image_test("sample-data/videos/planet_earch_2x03_jaguar_short.mp4-frames/frame0.jpg")
+# bui.extract_video_frames('sample-data/videos/planet_earch_2x03_jaguar_short.mp4')
+# entropy_diff_test("sample-data/videos/planet_earch_2x03_jaguar_short.mp4-frames/frame0.jpg",
+#                   "sample-data/videos/planet_earch_2x03_jaguar_short.mp4-frames/frame1.jpg")
+# file = "sample-data/videos/planet_earch_2x03_jaguar_short.mp4-frames/frame207.jpg"
+# sobel_filter_test(file)
+entropy_sequence_test("sample-data/videos/planet_earch_2x03_jaguar_short.mp4-frames")
+# entropy_shift_test("sample-data/videos/planet_earch_2x03_jaguar_short.mp4-frames/frame0.jpg",
+#                    "sample-data/videos/planet_earch_2x03_jaguar_short.mp4-frames/frame10.jpg")
+# entropy_value_test()
+# entropy_uniqueness_test("sample-data/videos/planet_earch_2x03_jaguar_short.mp4-frames/frame0.jpg",
+#                         "sample-data/videos/planet_earch_2x03_jaguar_short.mp4-frames/frame1.jpg")
+
+# Old Tests
+# ---------------
 
 # sobel_filter_test("star.jpg")
 # color_channel_entropy_test(file)

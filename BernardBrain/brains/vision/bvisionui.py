@@ -1,3 +1,5 @@
+import os
+import pathlib
 import numpy as np
 import cv2
 import time
@@ -7,9 +9,76 @@ mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from .bvision import *
 
-######################################################################
+########################################################################
 # UI
-######################################################################
+########################################################################
+
+def plot_images(images, max_cols=3, norm=None):
+   """Plot a list of images using matplotlib.
+
+   Parameters
+   ---------- 
+   images : list : np.array (image)
+   max_cols : int
+      The maximum number of columns to use.
+
+   """
+
+   cv2.destroyAllWindows()
+   fig = plt.figure()
+   #plt.axis("off")
+
+   cols = max(1, min(len(images), max_cols))
+   rows = max(1, math.ceil(len(images) / max_cols))
+   print("rows: %d cols: %d"%(rows, cols))
+   for i in range(0, len(images)):
+      ax = fig.add_subplot(rows, cols, i+1)
+      #ax.axis("off")
+      ax.imshow(images[i], cmap='gray', norm=norm)
+
+   plt.show()
+
+def extract_video_frames(filename):
+   """Extract frames of a video file as individual images.
+
+   Parameters
+   ---------- 
+   filename : string
+      The relative path of the input file.
+
+   Returns
+   ----------
+   boolean
+      True if successful, false otherwise.
+
+   """
+
+   source = pathlib.Path(filename)
+   if source.is_file():
+
+      # Create output directory.
+      dest = filename+"-frames"
+      pathlib.Path(dest).mkdir(parents=True, exist_ok=True)
+
+      # Read video frames.
+      vidcap = cv2.VideoCapture(filename)
+      success,image = vidcap.read()
+      count = 0
+      success = True
+      while success:
+         cv2.imwrite(dest+"/frame%d.jpg" % count, image)     # save frame as JPEG file      
+         success,image = vidcap.read()
+         count += 1
+
+      return True
+   else:
+      raise Exception("Soure file: "+filename+" does not exist.")
+
+   return False
+
+########################################################################
+# Deprecated
+########################################################################
 
 def show_images(images):
    cv2.destroyAllWindows()
@@ -32,24 +101,6 @@ def show_images(images):
       # print("w: %d, h: %d, sx: %d, sy: %d"%(width, height, shiftX, shiftY))
 
    cv2.waitKey(0)
-
-# show images in matplotlib
-def plot_images(images):
-   cv2.destroyAllWindows()
-   fig = plt.figure()
-   #plt.axis("off")
-
-   cols = max(1, min(len(images), 3))
-   rows = max(1, math.ceil(len(images) / 3))
-   print("rows: %d cols: %d"%(rows, cols))
-   for i in range(0, len(images)):
-      ax = fig.add_subplot(rows, cols, i+1)
-      #ax.axis("off")
-      ax.imshow(images[i], cmap='gray')
-
-   plt.show()
-      
-
 
 # draw a box around some rectangle (not a very safe method, might crash)
 def outline_rect(image, rect, color):

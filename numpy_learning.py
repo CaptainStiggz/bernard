@@ -92,6 +92,20 @@ def numpy_test():
    #   [[2 2]
    #    [1 1]]]]
 
+def concatenate_test():
+   a = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])
+   b = np.array([2, 2, 2, 2, 2, 2, 2, 2, 2])
+   a = a.reshape(3, 3)
+   b = b.reshape(3, 3)
+
+   print(np.concatenate([a, b], axis=1))
+
+def bincount_test():
+   a = np.array([[1, 2, 2, 1], [3, 4, 5, 6]])
+   print(a)
+   b = bincount2D_vectorized(a)
+   print(b)
+
 # Vectorized solution (simple but non-performant)
 def bincount2D_vectorized(a):
    print("bincount2D_vectorized:")
@@ -133,4 +147,8 @@ def unique2D_vectorized(a):
    print(np.unique(a_offs.ravel()))
    #return np.unique(a_offs.ravel(), minlength=a.shape[0]*N).reshape(-1, N)
 
-numpy_test()
+# MAIN
+# -----------
+
+# numpy_test()
+bincount_test()

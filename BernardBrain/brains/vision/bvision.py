@@ -1,7 +1,3 @@
-########################################################################
-# This is 72 characters
-########################################################################
-
 import numpy as np
 from scipy import ndimage
 from numba import njit
@@ -63,10 +59,37 @@ def image_diff(image1, image2):
    # the difference of ints.
    diff = np.absolute(image2.astype(dtype=np.float) 
                       - image1.astype(dtype=np.float))
+
+   print("max diff: %d, min diff: %d"%(diff.max(), diff.min()))
    return diff.astype(dtype=np.uint8)
 
+def image_diffs(list1, list2):
+   """Calculates the absolute pixel differences between two lists of
+   images.
+   
+   Parameters
+   ---------- 
+   list1 : list : np.array (image)
+   list2 : list : np.array (image)
+
+   Returns
+   ----------
+   list : np.array : uint8
+      A list of resulting images.
+
+   """
+
+   if len(list1) != len(list2):
+      raise Exception("Lists should be of the same length.")
+
+   output = []
+   for i in range(0, len(list1)):
+      output.append(image_diff(list1[i], list2[i]))
+
+   return output
+
 @timeit
-def entropy_local(image, ksize=9, step=1):
+def entropy_local(image, ksize=9, step=1, normalize=True):
    """Calculate the local entropy of an image. Local entropy is the 
    entropy of a windowed region, relative to that window.
    
@@ -83,6 +106,9 @@ def entropy_local(image, ksize=9, step=1):
       integer greater than 1.
    step: int
       The window step size. This should be a an integer greater than 0.
+   normalize : boolean
+      Whether or not to normalize the resulting array to values between
+      0 and 255.
 
    Returns
    ----------
@@ -107,17 +133,13 @@ def entropy_local(image, ksize=9, step=1):
 
    # Get the windowed array of shape (a.height, a.width, ksize, ksize).
    b = view_as_windows(a, (ksize, ksize), step)
-   
+
    # Replace each element of ksize x ksize kernel with the number of 
    # occurances of that element in the kernel.
    ar2D = b.reshape(-1, b.shape[-2] * b.shape[-1])
-   c = bincount2D_vectorized(ar2D)
-   #c = bincount2D_numba(ar2D, use_parallel=True, use_prange=True)
-   
-   # Convert bincount to probabilities and multiply by log2(p)
-   p = c / (ksize * ksize)
-   p[p == 0] = 1
-   s = p * np.log2(p)
+
+   # Calculate intermediate addends for entropy calculation.
+   s = shan_units(ar2D)
 
    # Replace each window with the sum of values in the window, and
    # reshape to the size of the original image (if step size = 1) or
@@ -127,11 +149,89 @@ def entropy_local(image, ksize=9, step=1):
    # This is an interesting measure...
    # e = -np.sum(p, axis=1).reshape(image.shape) 
 
-   return normalized_image(e)
+   return (normalize_array(e) if normalize else e)
 
-########################################################################
+#@timeit
+def shan_units(ar2D):
+   """Intermediate function to replace a 2D numpy array, representing
+   multiple images, or a windowed view of an image, with the terms to be
+   summed in calculating the entropy.
+   
+   Parameters
+   ----------
+   ar2D : np.array
+      Must be a 2 dimensional numpy array.
+
+   Returns
+   ----------
+   np.array
+
+   """
+
+   # Thie function takes the values along axis 1 and replaces that axis
+   # with the corresponding bincount. For example, if we have an input
+   # `arr2D` = [[1, 2, 2, 1],
+   #            [3, 4, 5, 6]]
+   # `c` will become: [[0, 2, 2, 0, 0, 0, 0],
+   #                   [0, 0, 0, 1, 1, 1, 1]]
+   c = bincount2D_vectorized(ar2D)
+   
+   # Convert bincount to probabilities and multiply by log2(p)
+   p = c / ar2D.shape[1]
+   p[p == 0] = 1
+   s = p * np.log2(p)
+   return s
+
 @timeit
-def entropy_stack(image):
+def entropy_sequential(frames, normalize=True):
+   """Calculate the inter-frame entropy from a sequence of images. Each
+   pixel of the output represents the entropy between the corresponding
+   pixel in each frame. 
+
+   Parameters
+   ---------- 
+   frames : list : np.array (image)
+   normalize : boolean
+      Whether or not to normalize the resulting array to values between
+      0 and 255.
+
+   Returns
+   ----------
+   np.array : uint8
+      A numpy array representing the entropy-filtered image. Each pixel 
+      represents the entropy between the corresponding pixel for each 
+      frame. For example, if there are 10 frames in input, the pixel
+      at (1, 1) will be the entropy of the pixel values at (1, 1) for
+      each of the 10 images.
+
+   """
+
+   # Get the initial frame and reshape it to:
+   # (frame.width * frame.height, 1).
+   sequence = frames[0]
+   output_shape = sequence.shape
+   sequence = sequence.reshape(-1, 1)
+
+   # Concatenate each frame to the full sequence. After this step, the
+   # shape of the sequence should be:
+   # (frame.width * frame.height, len(frames))
+   for i in range(1, len(frames)):
+      frame = frames[i]
+      frame = frame.reshape(-1, 1)
+      sequence = np.concatenate([sequence, frame], axis=1)
+
+   # Calculate intermediate addends for entropy calculation.
+   sequence = normalize_array(sequence, max_value=255, dtype=np.uint8)
+   s = shan_units(sequence)
+
+   # Calculate the output entropy and reshape to the same shape as the
+   # original frames.
+   e = -np.sum(s, axis=1).reshape(output_shape)
+
+   return (normalize_array(e) if normalize else e)
+
+@timeit
+def entropy_stack(image, normalize=False):
    """Generates a list of entropy-filtered images. using `entropy_local`,
    of various kernel and step sizes.
 
@@ -147,12 +247,58 @@ def entropy_stack(image):
 
    """
 
-   hi_rez = entropy_local(image, 7)
-   medh_rez = entropy_local(image, 15, 8)
-   medl_rez = entropy_local(image, 31, 16)
-   low_rez = entropy_local(image, 63, 40)
+   hi_rez = entropy_local(image, 7, normalize=normalize)
+   medh_rez = entropy_local(image, 15, 8, normalize=normalize)
+   medl_rez = entropy_local(image, 31, 16, normalize=normalize)
+   low_rez = entropy_local(image, 63, 32, normalize=normalize)
 
    return [hi_rez, medh_rez, medl_rez, low_rez]
+
+########################################################################
+@timeit
+def camera_shift(frame1, frame2, use_entropy=True):
+   """Find the global camera shift between two frames by using hill
+   climbing to find the shift resulting in minimized entropy between
+   the two frames.
+
+   """
+
+   def diff_entropy(frame1, frame2):
+      v = entropy_sequential([frame1, frame2], normalize=False)
+      return np.average(v)
+
+   def diff_absolute(frame1, frame2):
+      v = image_diff(frame1, frame2)
+      return np.average(v)
+
+   def diff(frame1, frame2, use_entropy):
+      return (diff_entropy(frame1, frame2) if use_entropy
+              else diff_absolute(frame1, frame2))
+
+   def min_shift(frame1, frame2, shiftX=0, shiftY=0):
+      nonlocal use_entropy
+      pad = 10
+      min_diff = diff(frame1, frame2, use_entropy)
+      slice1 = frame1[pad:-pad, pad:-pad]
+      # print(frame1.shape)
+      # print(slice1.shape)
+      for dy in range(-5, 6):
+         for dx in range(-5, 6):
+            slice2 = frame2[dy+pad:dy-pad, dx+pad:dx-pad]
+            e_val = diff(slice1, slice2, use_entropy)
+            print("(y, x):(%d, %d) -> e_val = %f"%(dy, dx, e_val))
+
+            if e_val < min_diff:
+               shiftX = dx
+               shiftY = dy
+
+
+      print("minimum diff value: %f" % min_diff)
+
+      return [shiftY, shiftX]
+   
+   return min_shift(frame1, frame2)
+
 
 # kSize = 30 seems good for course detail (320x320ish pixels)
 # kSize = 9 seems good for finer detail
@@ -186,13 +332,16 @@ def sum_convolve(image, ksize):
 
 
 @timeit
-def normalized_image(image):
+def normalized_image(image, relative_to=None):
    """Normalize values of an `image` to values between 0 and 255, where
    The smallest value becomes 0 and the largest value becomes 255.
    
    Parameters
    ---------- 
    image : np.array (image)
+   relative_to : np.array (image)
+      The image to relativize to. If none is supplied, `image` is 
+      normalized relative to itself.
 
    Returns
    ----------
@@ -201,13 +350,21 @@ def normalized_image(image):
 
    """
 
-   image *= 255.0/image.max() 
-   return image.astype(dtype=np.uint8)
+   # rel = image if relative_to is None else relative_to 
+   # print("max: %f"%float(rel.max()))
+   # image *= 255.0/rel.max()
+   # return image.astype(dtype=np.uint8)
 
-# create an image where each pixel is the probability of that pixel relative 
-# to the rest of the image
-def pixel_probabilities(image):
-   pass
+def normalize_array(arr, min_value=None, max_value=1, max_rel=None, dtype=None):
+   offset = (0 if min_value is None else arr.min())
+   # dtype = (dtype if dtype is not None else arr.dtype)
+   max_rel = (max_rel if max_rel is not None else arr.max())
+   arr = arr.astype(dtype=np.float64)
+   arr -= offset
+   arr *= max_value/max_rel
+   dtype = (dtype if dtype is not None else arr.dtype)
+   return arr.astype(dtype=dtype)
+
 
 # create an image where each pixel is the addends of the shannon entropy
 # relative to the rest of the image
@@ -252,6 +409,7 @@ def cross_entropy(file1, file2):
    # print("log2(pd1):")
    # print(lg)
    e = -np.sum(pd2 * lg)
+   print(e.shape)
    return e
 
 # calculate entropy using convolution
@@ -702,7 +860,6 @@ def windowed_occurences(a, ksize):
 
 # Vectorized solution (simple but non-performant)
 def bincount2D_vectorized(a):
-   print("bincount2D_vectorized:")
    N = a.max() + 1
    a_offs = a + np.arange(a.shape[0])[:, None] * N
    return np.bincount(a_offs.ravel(), minlength=a.shape[0]*N).reshape(-1, N)
